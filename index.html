@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>U+ 심사 플랫폼</title>
+  <title>NW통신기술경진대회</title>
   <link rel="stylesheet" href="style.css">
 </head>
 
@@ -13,7 +13,7 @@
 
 <div id="loginPage" class="page active">
   <div class="login-container">
-    <h2>일등 DNA Awards <br/>심사 플랫폼</h2>
+    <h2>NW통신기술경진대회<br/>심사 플랫폼</h2>
     <div class="form-group">
       <label for="loginId">아이디</label>
       <input type="text" id="loginId" placeholder="아이디를 입력하세요">
@@ -65,10 +65,6 @@
         <div class="form-group">
           <label>과제명</label>
           <input type="text" id="projectTitle" placeholder="과제명 입력">
-        </div>
-        <div class="form-group">
-          <label>과제요약</label>
-          <input type="text" id="projectSummary" placeholder="과제요약 입력">
         </div>
         <div class="form-group">
           <label>참가자 (쉼표로 구분)</label>
@@ -200,10 +196,6 @@
     <div class="form-group">
       <label>과제명</label>
       <input type="text" id="editProjectTitle" placeholder="과제명 입력">
-    </div>
-    <div class="form-group">
-      <label>과제요약</label>
-      <input type="text" id="editProjectSummary" placeholder="과제요약 입력">
     </div>
     <div class="form-group">
       <label>참가자 (쉼표로 구분)</label>
@@ -487,13 +479,12 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAjNVcXp3O-zOnT5iEXsPDzOzBktbrsUSQ",
-  authDomain: "axtival-a6b52.firebaseapp.com",
-  projectId: "axtival-a6b52",
-  storageBucket: "axtival-a6b52.firebasestorage.app",
-  messagingSenderId: "1072162719767",
-  appId: "1:1072162719767:web:f3eaadfc3ff31431a37452",
-  measurementId: "G-Y2EV68RKES"
+  apiKey: "AIzaSyAioCv4Fix5U7Nj-iXgdwNwQcPtLxOfgIE",
+  authDomain: "nwctc-b9e7c.firebaseapp.com",
+  projectId: "nwctc-b9e7c",
+  storageBucket: "nwctc-b9e7c.firebasestorage.app",
+  messagingSenderId: "884751378263",
+  appId: "1:884751378263:web:63f102fe2f0245b1f0c012"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -861,11 +852,10 @@ window.loadCategoriesForProject = async function () {
 window.registerProject = async function () {
   const teamName = document.getElementById('teamName').value;
   const title = document.getElementById('projectTitle').value;
-  const summary = document.getElementById('projectSummary').value;
   const participants = document.getElementById('projectParticipants').value;
   const categoryId = document.getElementById('projectCategory').value;
 
-  if (!teamName || !title || !summary || !participants || !categoryId) {
+  if (!teamName || !title || !participants || !categoryId) {
     window.showMessage('모든 필드를 입력하세요.', 'error');
     return;
   }
@@ -878,7 +868,6 @@ window.registerProject = async function () {
     await addDoc(collection(db, 'projects'), {
       teamName: teamName,
       title: title,
-      summary: summary,
       participants: participants.split(',').map(p => p.trim()),
       criteriaId: categoryId,
       criteriaCategory: criteriaData.category,
@@ -890,7 +879,6 @@ window.registerProject = async function () {
 
     document.getElementById('teamName').value = '';
     document.getElementById('projectTitle').value = '';
-    document.getElementById('projectSummary').value = '';
     document.getElementById('projectParticipants').value = '';
     document.getElementById('projectCategory').value = '';
 
@@ -1120,10 +1108,7 @@ window.showProjectDetail = async function (projectId) {
                             ${project.teamName ? `<span class="team-badge">${project.teamName}</span>` : ''}
                             ${project.title}
                         </h2>
-                        <h3 style="margin-top: 20px;">과제 요약</h3>
-                        <h4 style="margin-top: 20px;">
-                            ${project.summary}
-                        </h4>
+
                         <h3 style="margin-top: 20px;">참가자 정보</h3>
                         <div class="participant-list" style="margin-bottom: 30px;">
                             ${project.participants && project.participants.length > 0 ?
@@ -1294,7 +1279,6 @@ window.editProject = async function (projectId) {
     // 폼에 값 설정
     document.getElementById('editTeamName').value = project.teamName || '';
     document.getElementById('editProjectTitle').value = project.title || '';
-    document.getElementById('editProjectSummary').value = project.summary || '';
     document.getElementById('editProjectParticipants').value = project.participants ? project.participants.join(', ') : '';
     document.getElementById('editProjectCategory').value = project.criteriaId || '';
 
@@ -1326,11 +1310,10 @@ window.loadCategoriesForEditProject = async function () {
 window.updateProject = async function () {
   const teamName = document.getElementById('editTeamName').value;
   const title = document.getElementById('editProjectTitle').value;
-  const summary = document.getElementById('editProjectSummary').value;
   const participants = document.getElementById('editProjectParticipants').value;
   const categoryId = document.getElementById('editProjectCategory').value;
 
-  if (!teamName || !title || !summary || !participants || !categoryId) {
+  if (!teamName || !title || !participants || !categoryId) {
     window.showMessage('모든 필드를 입력하세요.', 'error');
     return;
   }
@@ -1343,7 +1326,6 @@ window.updateProject = async function () {
     await updateDoc(doc(db, 'projects', window.appState.editingProjectId), {
       teamName: teamName,
       title: title,
-      summary: summary,
       participants: participants.split(',').map(p => p.trim()),
       criteriaId: categoryId,
       criteriaCategory: criteriaData.category,
@@ -1768,10 +1750,10 @@ window.showScoringForm = async function (projectId, project, element) {
 
   scoringForm.innerHTML = `
                 <h3 style="color: #ffffff;">채점하기: ${project.teamName ? project.teamName + ' - ' : ''}${project.title}</h3>
-                <div class="existing-score">
-                    <h4>과제 요약</h4>
-                    <div style="color: #ffffff;">${project.summary}</div>
+                <div style="margin: 10px 0; color: #FF69B4; font-size: 0.9rem;">
+                    💡 팁: 과제를 다시 클릭하면 채점 창이 닫힙니다.
                 </div>
+
                 ${existingScoreHtml}
 
                 <h4 style="margin-top: 40px; color: #ffffff;">심사기준 - <strong style="color: #32CD32;">${criteriaData.description}</strong></h4>

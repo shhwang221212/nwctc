@@ -469,6 +469,7 @@ import {
   getFirestore,
   collection,
   addDoc,
+  setDoc,
   getDocs,
   doc,
   updateDoc,
@@ -494,6 +495,7 @@ const db = getFirestore(app);
 window.db = {
   collection: (name) => collection(db, name),
   addDoc: addDoc,
+  setDoc: setDoc,
   getDocs: getDocs,
   getDoc: getDoc,
   doc: (collectionName, docId) => doc(db, collectionName, docId),
@@ -514,6 +516,8 @@ window.login = async function () {
   }
 
   try {
+    await ensureDatabaseInitialized();
+
     const usersRef = collection(db, 'users');
     const q = query(usersRef, where("userId", "==", id), where("password", "==", password));
     const querySnapshot = await getDocs(q);
@@ -1942,23 +1946,66 @@ window.submitDynamicScore = async function (projectId, maxTotalScore) {
   }
 };
 
-// 초기 관리자 계정 생성 (최초 실행 시)
-async function initAdmin() {
-  try {
-    const q = query(collection(db, 'users'), where("userId", "==", "admin"));
-    const querySnapshot = await getDocs(q);
+// 로그인 화면 진입 시 필요한 초기 데이터 생성
+let databaseInitializationPromise = null;
 
-    if (querySnapshot.empty) {
-      await addDoc(collection(db, 'users'), {
-        name: "관리자",
-        userId: "admin",
-        password: "init1234",
-        role: "admin",
-        createdAt: new Date()
-      });
+async function initializeDatabase() {
+  const maxAttempts = 3;
+  let lastError;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const q = query(collection(db, 'users'), where("userId", "==", "admin"));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        // 고정 문서 ID를 사용해 여러 사용자가 동시에 접속해도 중복 생성을 방지한다.
+        await setDoc(doc(db, 'users', 'admin'), {
+          name: "관리자",
+          userId: "admin",
+          password: "init1234",
+          role: "admin",
+          createdAt: new Date()
+        });
+
+        return { adminCreated: true };
+      }
+
+      return { adminCreated: false };
+    } catch (error) {
+      lastError = error;
+
+      if (attempt < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+      }
+    }
+  }
+
+  throw lastError;
+}
+
+function ensureDatabaseInitialized() {
+  if (!databaseInitializationPromise) {
+    databaseInitializationPromise = initializeDatabase().catch(error => {
+      // 다음 로그인 시 다시 초기화를 시도할 수 있도록 실패한 Promise를 제거한다.
+      databaseInitializationPromise = null;
+      throw error;
+    });
+  }
+
+  return databaseInitializationPromise;
+}
+
+async function initializeLoginPage() {
+  try {
+    const result = await ensureDatabaseInitialized();
+
+    if (result.adminCreated) {
+      window.showMessage('초기 데이터베이스 설정이 완료되었습니다.', 'success');
     }
   } catch (error) {
-    // 오류 무시
+    console.error('초기 데이터베이스 설정 실패:', error);
+    window.showMessage('초기 데이터베이스 설정에 실패했습니다. 로그인하면 다시 시도합니다.', 'error');
   }
 }
 
@@ -1975,8 +2022,8 @@ document.getElementById('loginPassword').addEventListener('keypress', function (
   }
 });
 
-// 페이지 로드 시 초기화
-initAdmin();
+// 로그인 화면 진입 시 초기 데이터 확인 및 생성
+initializeLoginPage();
 
 // 페이지 로드 시 로그인 상태 확인
 document.addEventListener('DOMContentLoaded', function () {

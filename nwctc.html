@@ -1,0 +1,2011 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NW통신기술경진대회</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+<div class="message-container" id="messageContainer"></div>
+
+<div id="loginPage" class="page active">
+  <div class="login-container">
+    <h2>NW통신기술경진대회<br/>심사 플랫폼</h2>
+    <div class="form-group">
+      <label for="loginId">아이디</label>
+      <input type="text" id="loginId" placeholder="아이디를 입력하세요">
+    </div>
+    <div class="form-group">
+      <label for="loginPassword">비밀번호</label>
+      <input type="password" id="loginPassword" placeholder="비밀번호를 입력하세요">
+    </div>
+    <div style="text-align: center;">
+      <button onclick="login()">로그인</button>
+    </div>
+  </div>
+</div>
+
+<div id="adminPage" class="page">
+  <header>
+    <div class="container">
+      <h1>심사 플랫폼 - 관리자</h1>
+    </div>
+  </header>
+  <div class="container">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('projectList')">과제 목록</button>
+      <button class="tab-btn" onclick="switchTab('projectRegister')">과제 등록</button>
+      <button class="tab-btn" onclick="switchTab('criteriaManage')">심사항목 관리</button>
+      <button class="tab-btn" onclick="switchTab('criteriaCreate')">심사항목 등록</button>
+      <button class="tab-btn" onclick="switchTab('judges')">심사위원 관리</button>
+      <button class="tab-btn" onclick="switchTab('register')">심사위원 등록</button>
+      <button class="logout-btn" onclick="logout()" style="margin-left: auto;">로그아웃</button>
+    </div>
+
+    <div id="projectListTab" class="tab-content active">
+      <h2>과제 목록</h2>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button class="reset-btn" onclick="resetProjects()">과제 초기화</button>
+        <button class="reset-btn" onclick="resetScores()">채점 내역 초기화</button>
+        <button class="export-btn" onclick="exportToCSV()">채점 내역 CSV 내보내기</button>
+      </div>
+      <div id="adminProjectList" class="project-list"></div>
+    </div>
+
+    <div id="projectRegisterTab" class="tab-content">
+      <h2>과제 등록</h2>
+      <div class="card">
+        <div class="form-group">
+          <label>조 명</label>
+          <input type="text" id="teamName" placeholder="예: 1조, A팀">
+        </div>
+        <div class="form-group">
+          <label>과제명</label>
+          <input type="text" id="projectTitle" placeholder="과제명 입력">
+        </div>
+        <div class="form-group">
+          <label>참가자 (쉼표로 구분)</label>
+          <input type="text" id="projectParticipants" placeholder="예: 홍길동, 김철수, 이영희">
+        </div>
+        <div class="form-group">
+          <label>심사 카테고리</label>
+          <select id="projectCategory">
+            <option value="">선택하세요</option>
+          </select>
+        </div>
+        <button onclick="registerProject()">과제 등록</button>
+      </div>
+    </div>
+
+    <div id="criteriaCreateTab" class="tab-content">
+      <h2>심사항목 생성</h2>
+      <div class="card">
+        <div class="form-group">
+          <label>카테고리(부문)</label>
+          <input type="text" id="criteriaCategory" placeholder="예: 자유부문, 과제부문">
+        </div>
+        <div class="form-group">
+          <label>심사기준 설명</label>
+          <textarea id="criteriaDescription" rows="3" placeholder="심사기준에 대한 설명을 입력하세요"></textarea>
+        </div>
+
+        <h3>심사항목</h3>
+        <div id="criteriaItems">
+          <div class="criteria-item-input">
+            <div class="criteria-item-row">
+              <input type="text" placeholder="항목명" class="item-name">
+              <select class="item-type" onchange="toggleScoreInput(this)">
+                <option value="number">숫자</option>
+                <option value="text">총평</option>
+              </select>
+              <input type="number" placeholder="배점" class="item-score" min="0">
+              <div class="checkbox-label">
+                <input type="checkbox" class="item-required">
+                <span>필수</span>
+              </div>
+              <button class="remove-btn" onclick="removeCriteriaItem(this)">삭제</button>
+            </div>
+          </div>
+        </div>
+        <button class="add-btn" onclick="addCriteriaItem()" style="margin-top: 10px;">+ 항목 추가</button>
+        <button onclick="saveCriteria()" style="margin-top: 20px;">심사항목 저장</button>
+      </div>
+    </div>
+
+    <div id="criteriaManageTab" class="tab-content">
+      <h2>심사항목 관리</h2>
+      <div id="criteriaList" class="criteria-list"></div>
+    </div>
+
+    <div id="judgesTab" class="tab-content">
+      <h2>심사위원 리스트</h2>
+      <button class="reset-btn" onclick="resetJudges()">심사위원 초기화</button>
+      <div id="judgesList" class="user-list"></div>
+    </div>
+
+    <div id="registerTab" class="tab-content">
+      <h2>심사위원 등록</h2>
+      <div class="card">
+        <div class="form-group">
+          <label>이름</label>
+          <input type="text" id="userName" placeholder="이름 입력">
+        </div>
+        <div class="form-group">
+          <label>아이디</label>
+          <input type="text" id="userId" placeholder="아이디 입력">
+        </div>
+        <button onclick="registerUser()">심사위원 등록</button>
+      </div>
+    </div>
+
+    <div id="projectDetailView" style="display: none;">
+      <button class="back-btn" onclick="backToProjectList()">← 목록으로</button>
+      <div id="projectDetailContent"></div>
+    </div>
+  </div>
+</div>
+
+<div id="judgePage" class="page">
+  <header>
+    <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
+      <h1 style="display: flex; align-items: center">
+          <span id="judgeName" style="color: #32CD32;"></span>님
+
+      </h1>
+      <a style="margin-left: 1rem; text-decoration: underline; text-underline-offset: 4px; font-size: 1rem;" onclick="logout()">로그아웃</a>
+    </div>
+  </header>
+  <div class="container">
+    <h2>과제 목록</h2>
+    <div id="judgeProjectList" class="project-list"></div>
+  </div>
+</div>
+
+<div id="editModal" class="modal">
+  <div class="modal-content">
+    <h3>심사위원 정보 수정</h3>
+    <div class="form-group">
+      <label>이름</label>
+      <input type="text" id="editName" placeholder="이름 입력">
+    </div>
+    <div class="form-group">
+      <label>아이디</label>
+      <input type="text" id="editUserId" placeholder="아이디 입력">
+    </div>
+    <div class="form-group">
+      <label>비밀번호</label>
+      <input type="text" id="editPassword" placeholder="비밀번호 입력">
+    </div>
+    <div class="action-buttons">
+      <button onclick="updateUser()">수정</button>
+      <button onclick="closeModal()" style="background: #6c757d;">취소</button>
+    </div>
+  </div>
+</div>
+
+<div id="projectEditModal" class="modal">
+  <div class="modal-content">
+    <h3>과제 수정</h3>
+    <div class="form-group">
+      <label>조 명</label>
+      <input type="text" id="editTeamName" placeholder="예: 1조, A팀">
+    </div>
+    <div class="form-group">
+      <label>과제명</label>
+      <input type="text" id="editProjectTitle" placeholder="과제명 입력">
+    </div>
+    <div class="form-group">
+      <label>참가자 (쉼표로 구분)</label>
+      <input type="text" id="editProjectParticipants" placeholder="예: 홍길동, 김철수, 이영희">
+    </div>
+    <div class="form-group">
+      <label>심사 카테고리</label>
+      <select id="editProjectCategory">
+        <option value="">선택하세요</option>
+      </select>
+    </div>
+    <div class="action-buttons">
+      <button onclick="updateProject()">수정</button>
+      <button onclick="closeProjectModal()" style="background: #6c757d;">취소</button>
+    </div>
+  </div>
+</div>
+<div id="criteriaEditModal" class="modal">
+  <div class="modal-content">
+    <h3>심사항목 수정</h3>
+    <div class="form-group">
+      <label>카테고리(부문)</label>
+      <input type="text" id="editCriteriaCategory" placeholder="예: 자유부문, 과제부문">
+    </div>
+    <div class="form-group">
+      <label>심사기준 설명</label>
+      <textarea id="editCriteriaDescription" rows="3" placeholder="심사기준에 대한 설명을 입력하세요"></textarea>
+    </div>
+
+    <h3>심사항목</h3>
+    <div id="editCriteriaItems"></div>
+    <button class="add-btn" onclick="addEditCriteriaItem()" style="margin-top: 10px;">+ 항목 추가</button>
+
+    <div class="action-buttons" style="margin-top: 20px;">
+      <button onclick="updateCriteria()">수정</button>
+      <button onclick="closeCriteriaModal()" style="background: #6c757d;">취소</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">// 전역 함수들을 먼저 정의
+window.appState = {
+  currentUser: null,
+  projects: [],
+  users: [],
+  scores: [],
+  criteria: [],
+  editingUserId: null,
+  editingCriteriaId: null,
+  editingProjectId: null
+};
+
+// 메시지 표시 함수
+window.showMessage = function (message, type = 'info') {
+  const messageContainer = document.getElementById('messageContainer');
+  const messageEl = document.createElement('div');
+  messageEl.className = `${type}-message`;
+  messageEl.textContent = message;
+
+  messageContainer.innerHTML = '';
+  messageContainer.appendChild(messageEl);
+
+  setTimeout(() => {
+    messageEl.style.opacity = '0';
+    setTimeout(() => messageContainer.innerHTML = '', 300);
+  }, 3000);
+};
+
+// 로그인 상태 확인 및 복원
+window.checkLoginStatus = function () {
+  // 메모리에서 로그인 정보 확인
+  if (window.appState && window.appState.currentUser) {
+    const userData = window.appState.currentUser;
+
+    document.getElementById('loginPage').classList.remove('active');
+
+    if (userData.role === 'admin') {
+      document.getElementById('adminPage').classList.add('active');
+      if (window.loadAdminData) window.loadAdminData();
+    } else if (userData.role === 'judge') {
+      document.getElementById('judgePage').classList.add('active');
+      document.getElementById('judgeName').textContent = userData.name;
+      if (window.loadJudgeProjects) window.loadJudgeProjects();
+    }
+  }
+};
+
+window.login = async function () {
+  // Firebase가 로드될 때까지 기다림
+  if (!window.db) {
+    showMessage('시스템 초기화 중입니다. 잠시 후 다시 시도해주세요.', 'error');
+    return;
+  }
+
+  const id = document.getElementById('loginId').value;
+  const password = document.getElementById('loginPassword').value;
+
+  if (!id || !password) {
+    showMessage('아이디와 비밀번호를 입력하세요.', 'error');
+    return;
+  }
+
+  try {
+    const usersRef = window.db.collection('users');
+    const q = window.db.query(usersRef, window.db.where("userId", "==", id), window.db.where("password", "==", password));
+    const querySnapshot = await window.db.getDocs(q);
+
+    if (!querySnapshot.empty) {
+      const userDoc = querySnapshot.docs[0];
+      const userData = userDoc.data();
+
+      // 전역 상태에 사용자 정보 저장 (메모리)
+      window.appState.currentUser = {
+        id: userDoc.id,
+        ...userData
+      };
+
+      // sessionStorage에도 저장 (새로고침 대응)
+      try {
+        sessionStorage.setItem('currentUser', JSON.stringify(window.appState.currentUser));
+      } catch (e) {
+        // sessionStorage 사용 불가 시 무시
+      }
+
+      document.getElementById('loginPage').classList.remove('active');
+
+      if (userData.role === 'admin') {
+        document.getElementById('adminPage').classList.add('active');
+        window.loadAdminData();
+      } else if (userData.role === 'judge') {
+        document.getElementById('judgePage').classList.add('active');
+        // 심사위원 이름 표시
+        document.getElementById('judgeName').textContent = userData.name;
+        window.loadJudgeProjects();
+      }
+    } else {
+      showMessage('아이디 또는 비밀번호가 올바르지 않습니다.', 'error');
+    }
+  } catch (error) {
+    console.log(error);
+    showMessage('로그인 중 오류가 발생했습니다.', 'error');
+  }
+};
+
+
+
+// 심사항목 관련 함수
+window.addCriteriaItem = function () {
+  const container = document.getElementById('criteriaItems');
+  const itemDiv = document.createElement('div');
+  itemDiv.className = 'criteria-item-input';
+  itemDiv.innerHTML = `
+                <div class="criteria-item-row">
+                    <input type="text" placeholder="항목명" class="item-name">
+                    <select class="item-type" onchange="toggleScoreInput(this)">
+                        <option value="number">숫자</option>
+                        <option value="text">총평</option>
+                    </select>
+                    <input type="number" placeholder="배점" class="item-score" min="0">
+                    <div class="checkbox-label">
+                        <input type="checkbox" class="item-required">
+                        <span>필수</span>
+                    </div>
+                    <button class="remove-btn" onclick="removeCriteriaItem(this)">삭제</button>
+                </div>
+            `;
+  container.appendChild(itemDiv);
+};
+
+window.addEditCriteriaItem = function () {
+  const container = document.getElementById('editCriteriaItems');
+  const itemDiv = document.createElement('div');
+  itemDiv.className = 'criteria-item-input';
+  itemDiv.innerHTML = `
+                <div class="criteria-item-row">
+                    <input type="text" placeholder="항목명" class="item-name">
+                    <select class="item-type" onchange="toggleScoreInput(this)">
+                        <option value="number">숫자</option>
+                        <option value="text">총평</option>
+                    </select>
+                    <input type="number" placeholder="배점" class="item-score" min="0">
+                    <div class="checkbox-label">
+                        <input type="checkbox" class="item-required">
+                        <span>필수</span>
+                    </div>
+                    <button class="remove-btn" onclick="removeCriteriaItem(this)">삭제</button>
+                </div>
+            `;
+  container.appendChild(itemDiv);
+};
+
+window.removeCriteriaItem = function (button) {
+  button.closest('.criteria-item-input').remove();
+};
+
+window.toggleScoreInput = function (select) {
+  const scoreInput = select.parentElement.querySelector('.item-score');
+  if (select.value === 'text') {
+    scoreInput.style.display = 'none';
+    scoreInput.value = 0;
+  } else {
+    scoreInput.style.display = 'block';
+  }
+};
+
+window.closeCriteriaModal = function () {
+  const modal = document.getElementById('criteriaEditModal');
+  modal.classList.remove('active');
+  modal.style.display = 'none';
+  window.appState.editingCriteriaId = null;
+};
+
+// 나머지 전역 함수들도 여기에 정의
+window.logout = function () {
+  if (confirm('정말 로그아웃 하시겠습니까?')) {
+    // 세션 정보 삭제
+    window.appState.currentUser = null;
+    try {
+      sessionStorage.removeItem('currentUser');
+    } catch (e) {
+      // sessionStorage 사용 불가 시 무시
+    }
+
+    // 로그인 페이지로 이동
+    document.getElementById('adminPage').classList.remove('active');
+    document.getElementById('judgePage').classList.remove('active');
+    document.getElementById('loginPage').classList.add('active');
+
+    // 로그인 폼 초기화
+    document.getElementById('loginId').value = '';
+    document.getElementById('loginPassword').value = '';
+
+    showMessage('로그아웃되었습니다.', 'info');
+  }
+};
+window.registerUser = function () { };
+window.registerProject = function () { };
+window.switchTab = function (tabName) { };
+window.loadAdminData = function () { };
+window.loadAdminProjects = function () { };
+window.showProjectDetail = function (projectId) { };
+window.backToProjectList = function () { };
+window.exportToCSV = function () { };
+window.deleteProject = function (projectId) { };
+window.resetProjects = function () { };
+window.resetScores = function () { };
+window.resetJudges = function () { };
+window.loadJudgesList = function () { };
+window.editUser = function (userId) { };
+window.updateUser = function () { };
+window.deleteUser = function (userId) { };
+window.closeModal = function () { };
+window.loadJudgeProjects = function () { };
+window.showScoringForm = function (projectId, project, element) { };
+window.validateScore = function (input, maxScore) { };
+window.calculateTotal = function () { };
+window.submitScore = function (projectId) { };
+window.saveCriteria = function () { };
+window.loadCriteria = function () { };
+window.loadCategoriesForProject = function () { };
+window.editCriteria = function (criteriaId) { };
+window.updateCriteria = function () { };
+window.deleteCriteria = function (criteriaId) { };
+window.editProject = function (projectId) { };
+window.updateProject = function () { };
+window.closeProjectModal = function () { };
+window.loadCategoriesForEditProject = function () { };
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  doc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAioCv4Fix5U7Nj-iXgdwNwQcPtLxOfgIE",
+  authDomain: "nwctc-b9e7c.firebaseapp.com",
+  projectId: "nwctc-b9e7c",
+  storageBucket: "nwctc-b9e7c.firebasestorage.app",
+  messagingSenderId: "884751378263",
+  appId: "1:884751378263:web:63f102fe2f0245b1f0c012"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Firebase 함수들을 전역으로 노출
+window.db = {
+  collection: (name) => collection(db, name),
+  addDoc: addDoc,
+  getDocs: getDocs,
+  getDoc: getDoc,
+  doc: (collectionName, docId) => doc(db, collectionName, docId),
+  updateDoc: updateDoc,
+  deleteDoc: deleteDoc,
+  query: query,
+  where: where
+};
+
+// 실제 함수 구현
+window.login = async function () {
+  const id = document.getElementById('loginId').value;
+  const password = document.getElementById('loginPassword').value;
+
+  if (!id || !password) {
+    window.showMessage('아이디와 비밀번호를 입력하세요.', 'error');
+    return;
+  }
+
+  try {
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where("userId", "==", id), where("password", "==", password));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+      const userDoc = querySnapshot.docs[0];
+      const userData = userDoc.data();
+
+      // 전역 상태에 사용자 정보 저장
+      window.appState.currentUser = {
+        id: userDoc.id,
+        ...userData
+      };
+
+      // sessionStorage에도 저장 (새로고침 대응)
+      try {
+        sessionStorage.setItem('currentUser', JSON.stringify(window.appState.currentUser));
+      } catch (e) {
+        // sessionStorage 사용 불가 시 무시
+      }
+
+      document.getElementById('loginPage').classList.remove('active');
+
+      if (userData.role === 'admin') {
+        document.getElementById('adminPage').classList.add('active');
+        loadAdminData();
+      } else if (userData.role === 'judge') {
+        document.getElementById('judgePage').classList.add('active');
+        // 심사위원 이름 표시
+        document.getElementById('judgeName').textContent = userData.name;
+        loadJudgeProjects();
+      }
+    } else {
+      window.showMessage('아이디 또는 비밀번호가 올바르지 않습니다.', 'error');
+    }
+  } catch (error) {
+    console.log(error);
+    window.showMessage('로그인 중 오류가 발생했습니다.', 'error');
+  }
+};
+
+window.registerUser = async function () {
+  const name = document.getElementById('userName').value;
+  const userId = document.getElementById('userId').value;
+
+  if (!name || !userId) {
+    window.showMessage('이름과 아이디를 입력하세요.', 'error');
+    return;
+  }
+
+  const randomNumbers = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+  const password = userId + randomNumbers;
+
+  try {
+    await addDoc(collection(db, 'users'), {
+      name: name,
+      userId: userId,
+      password: password,
+      role: 'judge',
+      createdAt: new Date()
+    });
+
+    window.showMessage(`등록 완료! 아이디: ${userId}, 비밀번호: ${password}`, 'success');
+
+    document.getElementById('userName').value = '';
+    document.getElementById('userId').value = '';
+
+    loadJudgesList();
+  } catch (error) {
+    window.showMessage('심사위원 등록 중 오류가 발생했습니다.', 'error');
+  }
+};
+
+window.saveCriteria = async function () {
+  const category = document.getElementById('criteriaCategory').value;
+  const description = document.getElementById('criteriaDescription').value;
+
+  if (!category || !description) {
+    window.showMessage('카테고리와 심사기준을 입력하세요.', 'error');
+    return;
+  }
+
+  const items = [];
+  const itemElements = document.querySelectorAll('#criteriaItems .criteria-item-input');
+
+  let totalScore = 0;
+  for (const element of itemElements) {
+    const name = element.querySelector('.item-name').value;
+    const type = element.querySelector('.item-type').value;
+    const score = type === 'number' ? parseInt(element.querySelector('.item-score').value) || 0 : 0;
+    const required = element.querySelector('.item-required').checked;
+
+    if (!name) {
+      window.showMessage('모든 항목명을 입력하세요.', 'error');
+      return;
+    }
+
+    if (type === 'number' && score <= 0) {
+      window.showMessage('숫자 유형 항목은 배점을 입력해야 합니다.', 'error');
+      return;
+    }
+
+    totalScore += score;
+    items.push({ name, type, score, required });
+  }
+
+  if (items.length === 0) {
+    window.showMessage('최소 하나 이상의 심사항목을 추가하세요.', 'error');
+    return;
+  }
+
+  try {
+    await addDoc(collection(db, 'criteria'), {
+      category,
+      description,
+      items,
+      totalScore,
+      createdAt: new Date(),
+      createdBy: window.appState.currentUser.userId
+    });
+
+    window.showMessage('심사항목이 저장되었습니다.', 'success');
+
+    // 폼 초기화
+    document.getElementById('criteriaCategory').value = '';
+    document.getElementById('criteriaDescription').value = '';
+    document.getElementById('criteriaItems').innerHTML = `
+                    <div class="criteria-item-input">
+                        <div class="criteria-item-row">
+                            <input type="text" placeholder="항목명" class="item-name">
+                            <select class="item-type" onchange="toggleScoreInput(this)">
+                                <option value="number">숫자</option>
+                                <option value="text">총평</option>
+                            </select>
+                            <input type="number" placeholder="배점" class="item-score" min="0">
+                            <div class="checkbox-label">
+                                <input type="checkbox" class="item-required">
+                                <span>필수</span>
+                            </div>
+                            <button class="remove-btn" onclick="removeCriteriaItem(this)">삭제</button>
+                        </div>
+                    </div>
+                `;
+
+    loadCategoriesForProject();
+  } catch (error) {
+    window.showMessage('심사항목 저장 중 오류가 발생했습니다.', 'error');
+  }
+};
+
+window.loadCriteria = async function () {
+  try {
+    const criteriaSnapshot = await getDocs(collection(db, 'criteria'));
+    const criteriaList = document.getElementById('criteriaList');
+    criteriaList.innerHTML = '';
+
+    window.appState.criteria = [];
+
+    criteriaSnapshot.forEach(doc => {
+      const criteria = { id: doc.id, ...doc.data() };
+      window.appState.criteria.push(criteria);
+
+      const criteriaCard = document.createElement('div');
+      criteriaCard.className = 'criteria-card';
+      criteriaCard.innerHTML = `
+                        <div class="criteria-header">
+                            <div class="criteria-title">${criteria.category}</div>
+                            <div class="criteria-category">총 ${criteria.totalScore}점</div>
+                        </div>
+                        <div class="criteria-description">${criteria.description}</div>
+                        <div class="criteria-items">
+                            ${criteria.items.map(item => `
+                                <div class="criteria-item">
+                                    <div class="criteria-item-header">
+                                        <span class="criteria-item-name">${item.name}</span>
+                                        <span class="criteria-item-score">
+                                            ${item.type === 'number' ? `${item.score}점` : '총평'}
+                                        </span>
+                                    </div>
+                                    ${item.required ? '<span class="criteria-item-required">필수</span>' : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="action-buttons" style="margin-top: 15px;">
+                            <button class="edit-btn" onclick="editCriteria('${doc.id}')">수정</button>
+                            <button class="delete-btn" onclick="deleteCriteria('${doc.id}')">삭제</button>
+                        </div>
+                    `;
+      criteriaList.appendChild(criteriaCard);
+    });
+  } catch (error) {
+    // 오류 무시
+  }
+};
+
+window.editCriteria = async function (criteriaId) {
+  try {
+    const criteriaDoc = await getDoc(doc(db, 'criteria', criteriaId));
+    if (!criteriaDoc.exists()) {
+      window.showMessage('심사항목을 찾을 수 없습니다.', 'error');
+      return;
+    }
+
+    const criteria = criteriaDoc.data();
+    window.appState.editingCriteriaId = criteriaId;
+
+    document.getElementById('editCriteriaCategory').value = criteria.category;
+    document.getElementById('editCriteriaDescription').value = criteria.description;
+
+    const itemsContainer = document.getElementById('editCriteriaItems');
+    itemsContainer.innerHTML = '';
+
+    criteria.items.forEach(item => {
+      const itemDiv = document.createElement('div');
+      itemDiv.className = 'criteria-item-input';
+      itemDiv.innerHTML = `
+                        <div class="criteria-item-row">
+                            <input type="text" placeholder="항목명" class="item-name" value="${item.name}">
+                            <select class="item-type" onchange="toggleScoreInput(this)">
+                                <option value="number" ${item.type === 'number' ? 'selected' : ''}>숫자</option>
+                                <option value="text" ${item.type === 'text' ? 'selected' : ''}>총평</option>
+                            </select>
+                            <input type="number" placeholder="배점" class="item-score" min="0" value="${item.score}"
+                                   style="${item.type === 'text' ? 'display:none' : ''}">
+                            <div class="checkbox-label">
+                                <input type="checkbox" class="item-required" ${item.required ? 'checked' : ''}>
+                                <span>필수</span>
+                            </div>
+                            <button class="remove-btn" onclick="removeCriteriaItem(this)">삭제</button>
+                        </div>
+                    `;
+      itemsContainer.appendChild(itemDiv);
+    });
+
+    // 모달 표시
+    const modal = document.getElementById('criteriaEditModal');
+    modal.classList.add('active');
+
+    // 모달 콘텐츠가 중앙에 오도록 보장
+    modal.style.display = 'flex';
+    modal.style.justifyContent = 'center';
+    modal.style.alignItems = 'center';
+  } catch (error) {
+    window.showMessage('심사항목 정보를 불러오는 중 오류가 발생했습니다.', 'error');
+    console.error(error);
+  }
+};
+
+window.updateCriteria = async function () {
+  const category = document.getElementById('editCriteriaCategory').value;
+  const description = document.getElementById('editCriteriaDescription').value;
+
+  if (!category || !description) {
+    window.showMessage('카테고리와 심사기준을 입력하세요.', 'error');
+    return;
+  }
+
+  const items = [];
+  const itemElements = document.querySelectorAll('#editCriteriaItems .criteria-item-input');
+
+  let totalScore = 0;
+  for (const element of itemElements) {
+    const name = element.querySelector('.item-name').value;
+    const type = element.querySelector('.item-type').value;
+    const score = type === 'number' ? parseInt(element.querySelector('.item-score').value) || 0 : 0;
+    const required = element.querySelector('.item-required').checked;
+
+    if (!name) {
+      window.showMessage('모든 항목명을 입력하세요.', 'error');
+      return;
+    }
+
+    if (type === 'number' && score <= 0) {
+      window.showMessage('숫자 유형 항목은 배점을 입력해야 합니다.', 'error');
+      return;
+    }
+
+    totalScore += score;
+    items.push({ name, type, score, required });
+  }
+
+  if (items.length === 0) {
+    window.showMessage('최소 하나 이상의 심사항목을 추가하세요.', 'error');
+    return;
+  }
+
+  try {
+    await updateDoc(doc(db, 'criteria', window.appState.editingCriteriaId), {
+      category,
+      description,
+      items,
+      totalScore,
+      updatedAt: new Date()
+    });
+
+    window.showMessage('심사항목이 수정되었습니다.', 'success');
+    closeCriteriaModal();
+    loadCriteria();
+    loadCategoriesForProject();
+  } catch (error) {
+    window.showMessage('심사항목 수정 중 오류가 발생했습니다.', 'error');
+  }
+};
+
+window.deleteCriteria = async function (criteriaId) {
+  if (confirm('정말 이 심사항목을 삭제하시겠습니까?')) {
+    try {
+      await deleteDoc(doc(db, 'criteria', criteriaId));
+      window.showMessage('심사항목이 삭제되었습니다.', 'success');
+      loadCriteria();
+      loadCategoriesForProject();
+    } catch (error) {
+      window.showMessage('심사항목 삭제 중 오류가 발생했습니다.', 'error');
+    }
+  }
+};
+
+window.loadCategoriesForProject = async function () {
+  try {
+    const criteriaSnapshot = await getDocs(collection(db, 'criteria'));
+    const categorySelect = document.getElementById('projectCategory');
+    categorySelect.innerHTML = '<option value="">선택하세요</option>';
+
+    criteriaSnapshot.forEach(doc => {
+      const criteria = doc.data();
+      const option = document.createElement('option');
+      option.value = doc.id;
+      option.textContent = `${criteria.category} (${criteria.totalScore}점)`;
+      categorySelect.appendChild(option);
+    });
+  } catch (error) {
+    // 오류 무시
+  }
+};
+
+window.registerProject = async function () {
+  const teamName = document.getElementById('teamName').value;
+  const title = document.getElementById('projectTitle').value;
+  const participants = document.getElementById('projectParticipants').value;
+  const categoryId = document.getElementById('projectCategory').value;
+
+  if (!teamName || !title || !participants || !categoryId) {
+    window.showMessage('모든 필드를 입력하세요.', 'error');
+    return;
+  }
+
+  try {
+    // 선택한 카테고리 정보 가져오기
+    const criteriaDoc = await getDoc(doc(db, 'criteria', categoryId));
+    const criteriaData = criteriaDoc.data();
+
+    await addDoc(collection(db, 'projects'), {
+      teamName: teamName,
+      title: title,
+      participants: participants.split(',').map(p => p.trim()),
+      criteriaId: categoryId,
+      criteriaCategory: criteriaData.category,
+      createdBy: window.appState.currentUser.userId,
+      createdAt: new Date()
+    });
+
+    window.showMessage('과제가 등록되었습니다!', 'success');
+
+    document.getElementById('teamName').value = '';
+    document.getElementById('projectTitle').value = '';
+    document.getElementById('projectParticipants').value = '';
+    document.getElementById('projectCategory').value = '';
+
+    loadAdminProjects();
+  } catch (error) {
+    window.showMessage('과제 등록 중 오류가 발생했습니다.', 'error');
+  }
+};
+
+window.switchTab = function (tabName) {
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+  // 상세보기 숨기기
+  document.getElementById('projectDetailView').style.display = 'none';
+
+  // 과제 목록 탭 다시 표시 (버그 수정)
+  document.getElementById('projectListTab').style.display = '';
+
+  event.target.classList.add('active');
+  document.getElementById(tabName + 'Tab').classList.add('active');
+
+  if (tabName === 'projectList') {
+    loadAdminProjects();
+  } else if (tabName === 'judges') {
+    loadJudgesList();
+  } else if (tabName === 'criteriaManage') {
+    loadCriteria();
+  } else if (tabName === 'projectRegister') {
+    loadCategoriesForProject();
+  }
+};
+
+window.loadAdminData = async function () {
+  try {
+    const usersSnapshot = await getDocs(collection(db, 'users'));
+    const users = [];
+    usersSnapshot.forEach(doc => {
+      users.push({ id: doc.id, ...doc.data() });
+    });
+    window.appState.users = users;
+
+    loadAdminProjects();
+    loadCategoriesForProject();
+  } catch (error) {
+    // 오류 무시
+  }
+};
+
+window.loadAdminProjects = async function () {
+  try {
+    const projectsSnapshot = await getDocs(collection(db, 'projects'));
+    const projectsList = document.getElementById('adminProjectList');
+    projectsList.innerHTML = '';
+
+    const projects = [];
+
+    // 모든 프로젝트 데이터와 점수 가져오기
+    for (const projectDoc of projectsSnapshot.docs) {
+      const project = { id: projectDoc.id, ...projectDoc.data() };
+
+      const scoresSnapshot = await getDocs(query(collection(db, 'scores'), where("projectId", "==", project.id)));
+      const scores = [];
+      scoresSnapshot.forEach(scoreDoc => {
+        scores.push(scoreDoc.data());
+      });
+
+      project.scores = scores;
+      project.avgScore = scores.length > 0
+        ? scores.reduce((sum, s) => sum + s.totalScore, 0) / scores.length
+        : 0;
+
+      projects.push(project);
+    }
+
+    // 평균 점수로 정렬 (높은 점수부터)
+    projects.sort((a, b) => b.avgScore - a.avgScore);
+
+    // 부문별로 프로젝트 분류하고 정렬
+    const categoryGroups = {};
+    projects.forEach(p => {
+      const category = p.criteriaCategory || '기타';
+      if (!categoryGroups[category]) {
+        categoryGroups[category] = [];
+      }
+      categoryGroups[category].push(p);
+    });
+
+    // 각 카테고리별로 정렬
+    Object.keys(categoryGroups).forEach(category => {
+      categoryGroups[category].sort((a, b) => b.avgScore - a.avgScore);
+    });
+
+    // 정렬된 프로젝트 목록 생성
+    const sortedProjects = [];
+    const rankedProjects = new Set(); // 1,2등 프로젝트 ID 저장
+
+    // 먼저 각 부문별 1,2등 추가
+    Object.keys(categoryGroups).forEach(category => {
+      const categoryProjects = categoryGroups[category];
+      if (categoryProjects.length > 0 && categoryProjects[0].avgScore > 0) {
+        sortedProjects.push(categoryProjects[0]); // 1등
+        rankedProjects.add(categoryProjects[0].id);
+      }
+      if (categoryProjects.length > 1 && categoryProjects[1].avgScore > 0) {
+        sortedProjects.push(categoryProjects[1]); // 2등
+        rankedProjects.add(categoryProjects[1].id);
+      }
+    });
+
+    // 나머지 프로젝트를 조 이름으로 정렬하여 추가
+    const unrankedProjects = projects.filter(p => !rankedProjects.has(p.id));
+    unrankedProjects.sort((a, b) => {
+      const teamA = a.teamName || '';
+      const teamB = b.teamName || '';
+
+      // 숫자 추출을 위한 정규식
+      const numA = parseInt(teamA.match(/\d+/) || '999');
+      const numB = parseInt(teamB.match(/\d+/) || '999');
+
+      // 숫자가 있으면 숫자로 비교, 없으면 문자열로 비교
+      if (!isNaN(numA) && !isNaN(numB)) {
+        return numA - numB;
+      }
+      return teamA.localeCompare(teamB, 'ko');
+    });
+
+    // 정렬된 순서대로 최종 목록 생성
+    const finalProjectList = [...sortedProjects, ...unrankedProjects];
+
+    // 프로젝트 카드 생성
+    finalProjectList.forEach((project) => {
+      const category = project.criteriaCategory || '기타';
+      const categoryProjects = categoryGroups[category];
+      const index = categoryProjects.findIndex(p => p.id === project.id);
+
+      let rankLabel = '';
+      let rankStyle = '';
+      if (index === 0 && project.avgScore > 0) {
+        rankLabel = `${category} 1등`;
+        rankStyle = 'background: linear-gradient(135deg, #FFD700, #FFA500);';
+      } else if (index === 1 && project.avgScore > 0) {
+        rankLabel = `${category} 2등`;
+        rankStyle = 'background: linear-gradient(135deg, #C0C0C0, #A8A8A8);';
+      }
+
+      const categoryClass = project.criteriaCategory ?
+        (project.criteriaCategory.includes('자유') ? 'category-free' :
+          project.criteriaCategory.includes('과제') ? 'category-challenge' : 'category-etc') :
+        'category-etc';
+
+      const projectCard = document.createElement('div');
+      projectCard.className = 'card project-item';
+      projectCard.innerHTML = `
+                        ${rankLabel ? `<div class="project-rank" style="${rankStyle}">${rankLabel}</div>` : ''}
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="margin-bottom: 8px;">
+                                    ${project.teamName ? `<span class="team-badge">${project.teamName}</span>` : ''}
+                                    <span class="project-title">${project.title}</span>
+                                </div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
+                                <div class="total-score" style="text-align: right;">평균: ${project.avgScore.toFixed(1)}점</div>
+                                <div class="action-buttons">
+                                    <button class="edit-btn" onclick="editProject('${project.id}')">수정</button>
+                                    <button class="delete-btn" onclick="deleteProject('${project.id}')">삭제</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+      projectCard.onclick = (e) => {
+        if (!e.target.classList.contains('delete-btn') && !e.target.classList.contains('edit-btn')) {
+          showProjectDetail(project.id);
+        }
+      };
+      projectsList.appendChild(projectCard);
+    });
+
+    // 전역 상태에 저장
+    window.appState.projects = projects;
+  } catch (error) {
+    // 오류 무시
+  }
+};
+
+window.showProjectDetail = async function (projectId) {
+  try {
+    const project = window.appState.projects.find(p => p.id === projectId);
+    if (!project) return;
+
+    // 심사 기준 정보 가져오기
+    let criteriaData = null;
+    if (project.criteriaId) {
+      const criteriaDoc = await getDoc(doc(db, 'criteria', project.criteriaId));
+      if (criteriaDoc.exists()) {
+        criteriaData = criteriaDoc.data();
+      }
+    }
+
+    // 점수 상세 정보 가져오기
+    const scoresSnapshot = await getDocs(query(collection(db, 'scores'), where("projectId", "==", projectId)));
+    const scores = [];
+    scoresSnapshot.forEach(scoreDoc => {
+      scores.push(scoreDoc.data());
+    });
+
+    // 항목별 평균 계산
+    let itemAverages = {};
+    if (criteriaData && scores.length > 0) {
+      criteriaData.items.forEach(item => {
+        if (item.type === 'number') {
+          const itemScores = scores.map(s => s.itemScores?.[item.name] || 0);
+          itemAverages[item.name] = itemScores.reduce((sum, score) => sum + score, 0) / itemScores.length;
+        }
+      });
+    }
+
+    const avgTotal = scores.length > 0
+      ? scores.reduce((sum, s) => sum + s.totalScore, 0) / scores.length : 0;
+
+    // 상세 화면 HTML 생성
+    const detailContent = document.getElementById('projectDetailContent');
+    detailContent.innerHTML = `
+                    <div class="score-detail-section">
+                        <h2 style="color: #ffffff;">
+                            ${project.teamName ? `<span class="team-badge">${project.teamName}</span>` : ''}
+                            ${project.title}
+                        </h2>
+
+                        <h3 style="margin-top: 20px;">참가자 정보</h3>
+                        <div class="participant-list" style="margin-bottom: 30px;">
+                            ${project.participants && project.participants.length > 0 ?
+      project.participants.map(participant =>
+        `<span class="participant-tag">${participant}</span>`
+      ).join('')
+      : '<p style="color: #FF69B4;">참가자 정보가 없습니다.</p>'}
+                        </div>
+
+                        ${criteriaData ? `
+                            <h3 style="margin-top: 30px;">평가 항목별 평균 점수</h3>
+                            <div class="score-summary">
+                                ${criteriaData.items.filter(item => item.type === 'number').map(item => `
+                                    <div class="score-summary-item">
+                                        <div class="score-summary-label">${item.name} <span style="color: #32CD32;">${item.score}%</span></div>
+                                        <div class="score-summary-value">${(itemAverages[item.name] || 0).toFixed(1)}</div>
+                                    </div>
+                                `).join('')}
+                                <div class="score-summary-item">
+                                    <div class="score-summary-label">총점</div>
+                                    <div class="score-summary-value">${avgTotal.toFixed(1)}</div>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        <h3 style="margin-top: 30px;">심사위원별 평가 내역</h3>
+                        <div class="judge-scores">
+                            ${scores.length > 0 ? scores.map(score => `
+                                <div class="judge-score-card">
+                                    <div class="judge-name">${score.judgeName}</div>
+                                    <div class="judge-score-details">
+                                        ${criteriaData ? criteriaData.items.filter(item => item.type === 'number').map(item => `
+                                            <div class="judge-score-item">
+                                                <div class="judge-score-label">${item.name}</div>
+                                                <div class="judge-score-value">${score.itemScores?.[item.name] || 0}</div>
+                                            </div>
+                                        `).join('') : ''}
+                                        <div class="judge-score-item">
+                                            <div class="judge-score-label">총점</div>
+                                            <div class="judge-score-value"><strong>${score.totalScore}</strong></div>
+                                        </div>
+                                    </div>
+                                    ${score.review ? `<div class="judge-review">"${score.review}"</div>` : ''}
+                                </div>
+                            `).join('') : '<p style="text-align: center; color: #FF69B4;">아직 평가 내역이 없습니다.</p>'}
+                        </div>
+                    </div>
+                `;
+
+    // 목록 숨기고 상세보기 표시
+    document.getElementById('projectListTab').style.display = 'none';
+    document.getElementById('projectDetailView').style.display = 'block';
+  } catch (error) {
+    window.showMessage('상세 정보를 불러오는 중 오류가 발생했습니다.', 'error');
+  }
+};
+
+window.backToProjectList = function () {
+  document.getElementById('projectDetailView').style.display = 'none';
+  document.getElementById('projectListTab').style.display = 'block';
+};
+
+window.exportToCSV = async function () {
+  try {
+    // 모든 데이터 수집
+    const projectsSnapshot = await getDocs(collection(db, 'projects'));
+    const scoresSnapshot = await getDocs(collection(db, 'scores'));
+    const criteriaSnapshot = await getDocs(collection(db, 'criteria'));
+
+    const projects = {};
+    const criteria = {};
+
+    projectsSnapshot.forEach(doc => {
+      projects[doc.id] = { id: doc.id, ...doc.data() };
+    });
+
+    criteriaSnapshot.forEach(doc => {
+      criteria[doc.id] = doc.data();
+    });
+
+    const scores = [];
+    scoresSnapshot.forEach(doc => {
+      const score = doc.data();
+      const project = projects[score.projectId];
+      if (project) {
+        const projectCriteria = project.criteriaId ? criteria[project.criteriaId] : null;
+
+        let row = {
+          '과제명': project.title,
+          '참가자': project.participants.join(', '),
+          '참가부문': project.criteriaCategory || '기타',
+          '심사위원': score.judgeName
+        };
+
+        // 동적으로 점수 항목 추가
+        if (projectCriteria && score.itemScores) {
+          projectCriteria.items.forEach(item => {
+            if (item.type === 'number') {
+              row[item.name] = score.itemScores[item.name] || 0;
+            }
+          });
+        }
+
+        row['총점'] = score.totalScore;
+        row['총평'] = score.review || '';
+
+        scores.push(row);
+      }
+    });
+
+    if (scores.length === 0) {
+      window.showMessage('내보낼 채점 내역이 없습니다.', 'info');
+      return;
+    }
+
+    // CSV 생성
+    const headers = Object.keys(scores[0]);
+    const csvContent = [
+      headers.join(','),
+      ...scores.map(row =>
+        headers.map(header => {
+          const value = row[header];
+          // 쉼표나 줄바꿈이 있는 경우 따옴표로 감싸기
+          return typeof value === 'string' && (value.includes(',') || value.includes('\n'))
+            ? `"${value.replace(/"/g, '""')}"`
+            : value;
+        }).join(',')
+      )
+    ].join('\n');
+
+    // BOM 추가 (한글 깨짐 방지)
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    const now = new Date();
+    const fileName = `내역_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}.csv`;
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', fileName);
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    window.showMessage('CSV 파일이 다운로드되었습니다.', 'success');
+  } catch (error) {
+    window.showMessage('CSV 내보내기 중 오류가 발생했습니다.', 'error');
+  }
+};
+
+window.editProject = async function (projectId) {
+  try {
+    // 프로젝트 정보 가져오기
+    const projectDoc = await getDoc(doc(db, 'projects', projectId));
+    if (!projectDoc.exists()) {
+      window.showMessage('과제를 찾을 수 없습니다.', 'error');
+      return;
+    }
+
+    const project = projectDoc.data();
+    window.appState.editingProjectId = projectId;
+
+    // 카테고리 목록 먼저 로드
+    await loadCategoriesForEditProject();
+
+    // 폼에 값 설정
+    document.getElementById('editTeamName').value = project.teamName || '';
+    document.getElementById('editProjectTitle').value = project.title || '';
+    document.getElementById('editProjectParticipants').value = project.participants ? project.participants.join(', ') : '';
+    document.getElementById('editProjectCategory').value = project.criteriaId || '';
+
+    // 모달 열기
+    document.getElementById('projectEditModal').classList.add('active');
+  } catch (error) {
+    window.showMessage('과제 정보를 불러오는 중 오류가 발생했습니다.', 'error');
+  }
+};
+
+window.loadCategoriesForEditProject = async function () {
+  try {
+    const criteriaSnapshot = await getDocs(collection(db, 'criteria'));
+    const categorySelect = document.getElementById('editProjectCategory');
+    categorySelect.innerHTML = '<option value="">선택하세요</option>';
+
+    criteriaSnapshot.forEach(doc => {
+      const criteria = doc.data();
+      const option = document.createElement('option');
+      option.value = doc.id;
+      option.textContent = `${criteria.category} (${criteria.totalScore}점)`;
+      categorySelect.appendChild(option);
+    });
+  } catch (error) {
+    // 오류 무시
+  }
+};
+
+window.updateProject = async function () {
+  const teamName = document.getElementById('editTeamName').value;
+  const title = document.getElementById('editProjectTitle').value;
+  const participants = document.getElementById('editProjectParticipants').value;
+  const categoryId = document.getElementById('editProjectCategory').value;
+
+  if (!teamName || !title || !participants || !categoryId) {
+    window.showMessage('모든 필드를 입력하세요.', 'error');
+    return;
+  }
+
+  try {
+    // 선택한 카테고리 정보 가져오기
+    const criteriaDoc = await getDoc(doc(db, 'criteria', categoryId));
+    const criteriaData = criteriaDoc.data();
+
+    await updateDoc(doc(db, 'projects', window.appState.editingProjectId), {
+      teamName: teamName,
+      title: title,
+      participants: participants.split(',').map(p => p.trim()),
+      criteriaId: categoryId,
+      criteriaCategory: criteriaData.category,
+      updatedAt: new Date()
+    });
+
+    window.showMessage('과제가 수정되었습니다.', 'success');
+    closeProjectModal();
+    loadAdminProjects();
+  } catch (error) {
+    window.showMessage('과제 수정 중 오류가 발생했습니다.', 'error');
+  }
+};
+
+window.closeProjectModal = function () {
+  document.getElementById('projectEditModal').classList.remove('active');
+  window.appState.editingProjectId = null;
+};
+
+window.deleteProject = async function (projectId) {
+  if (confirm('정말 이 과제를 삭제하시겠습니까?')) {
+    try {
+      await deleteDoc(doc(db, 'projects', projectId));
+      window.showMessage('과제가 삭제되었습니다.', 'success');
+      loadAdminProjects();
+    } catch (error) {
+      window.showMessage('과제 삭제 중 오류가 발생했습니다.', 'error');
+    }
+  }
+};
+
+window.resetScores = async function () {
+  const confirmMessage = `정말 모든 채점 내역을 삭제하시겠습니까?\n\n⚠️ 이 작업은 되돌릴 수 없습니다.\n- 모든 심사위원의 채점 내역이 삭제됩니다.\n- 과제는 유지되지만 점수는 모두 초기화됩니다.`;
+
+  if (!confirm(confirmMessage)) {
+    return;
+  }
+
+  // 두 번 확인
+  if (!confirm('다시 한 번 확인합니다.\n정말로 모든 채점 내역을 초기화하시겠습니까?')) {
+    return;
+  }
+
+  try {
+    // 모든 채점 내역 삭제
+    const scoresSnapshot = await getDocs(collection(db, 'scores'));
+    const deletePromises = [];
+    scoresSnapshot.forEach(doc => {
+      deletePromises.push(deleteDoc(doc.ref));
+    });
+
+    await Promise.all(deletePromises);
+
+    window.showMessage(`${deletePromises.length}개의 채점 내역이 초기화되었습니다.`, 'success');
+    loadAdminProjects();
+  } catch (error) {
+    window.showMessage('채점 내역 초기화 중 오류가 발생했습니다.', 'error');
+  }
+};
+
+window.resetProjects = async function () {
+  const confirmMessage = `정말 모든 과제와 채점 내역을 삭제하시겠습니까?\n\n⚠️ 이 작업은 되돌릴 수 없습니다.\n- 모든 과제가 삭제됩니다.\n- 모든 채점 내역이 삭제됩니다.`;
+
+  if (!confirm(confirmMessage)) {
+    return;
+  }
+
+  // 두 번 확인
+  if (!confirm('다시 한 번 확인합니다.\n정말로 모든 과제를 초기화하시겠습니까?')) {
+    return;
+  }
+
+  try {
+    // 모든 과제 삭제
+    const projectsSnapshot = await getDocs(collection(db, 'projects'));
+    const deleteProjectPromises = [];
+    projectsSnapshot.forEach(doc => {
+      deleteProjectPromises.push(deleteDoc(doc.ref));
+    });
+
+    // 모든 채점 내역 삭제
+    const scoresSnapshot = await getDocs(collection(db, 'scores'));
+    const deleteScorePromises = [];
+    scoresSnapshot.forEach(doc => {
+      deleteScorePromises.push(deleteDoc(doc.ref));
+    });
+
+    // 모든 삭제 작업 실행
+    await Promise.all([...deleteProjectPromises, ...deleteScorePromises]);
+
+    window.showMessage('모든 과제와 채점 내역이 초기화되었습니다.', 'success');
+    loadAdminProjects();
+  } catch (error) {
+    window.showMessage('과제 초기화 중 오류가 발생했습니다.', 'error');
+  }
+};
+
+window.resetJudges = async function () {
+  const confirmMessage = `정말 모든 심사위원을 삭제하시겠습니까?\n\n⚠️ 이 작업은 되돌릴 수 없습니다.\n- 모든 심사위원 계정이 삭제됩니다.\n- 관리자 계정은 유지됩니다.`;
+
+  if (!confirm(confirmMessage)) {
+    return;
+  }
+
+  // 두 번 확인
+  if (!confirm('다시 한 번 확인합니다.\n정말로 모든 심사위원을 초기화하시겠습니까?')) {
+    return;
+  }
+
+  try {
+    // 심사위원만 삭제 (관리자는 유지)
+    const judgesQuery = query(collection(db, 'users'), where("role", "==", "judge"));
+    const judgesSnapshot = await getDocs(judgesQuery);
+
+    const deletePromises = [];
+    judgesSnapshot.forEach(doc => {
+      deletePromises.push(deleteDoc(doc.ref));
+    });
+
+    await Promise.all(deletePromises);
+
+    window.showMessage(`${deletePromises.length}명의 심사위원이 삭제되었습니다.`, 'success');
+    loadJudgesList();
+  } catch (error) {
+    window.showMessage('심사위원 초기화 중 오류가 발생했습니다.', 'error');
+  }
+};
+
+window.loadJudgesList = async function () {
+  try {
+    const judgesQuery = query(collection(db, 'users'), where("role", "==", "judge"));
+    const judgesSnapshot = await getDocs(judgesQuery);
+    const judgesList = document.getElementById('judgesList');
+    judgesList.innerHTML = '';
+
+    // judgesSnapshot을 배열로 변환 후 정렬
+    const sortedJudges = judgesSnapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .sort((a, b) => a.name.localeCompare(b.name)); // 이름 기준 오름차순 정렬
+
+    // 정렬된 배열을 이용해 DOM에 추가
+    sortedJudges.forEach(judge => {
+      const userCard = document.createElement('div');
+      userCard.className = 'user-card';
+      userCard.innerHTML = `
+            <div class="user-info">
+                <div class="user-name">${judge.name}</div>
+                <div class="user-credentials">
+                    아이디: ${judge.userId} | 비밀번호: ${judge.password}
+                </div>
+            </div>
+            <div class="action-buttons">
+                <button class="edit-btn" onclick="editUser('${judge.id}')">수정</button>
+                <button class="delete-btn" onclick="deleteUser('${judge.id}')">삭제</button>
+            </div>
+        `;
+      judgesList.appendChild(userCard);
+    });
+  } catch (error) {
+    // 오류 무시
+  }
+};
+
+window.editUser = async function (userId) {
+  try {
+    const usersSnapshot = await getDocs(collection(db, 'users'));
+    let userData = null;
+
+    usersSnapshot.forEach(doc => {
+      if (doc.id === userId) {
+        userData = doc.data();
+      }
+    });
+
+    if (userData) {
+      window.appState.editingUserId = userId;
+      document.getElementById('editName').value = userData.name;
+      document.getElementById('editUserId').value = userData.userId;
+      document.getElementById('editPassword').value = userData.password;
+      document.getElementById('editModal').classList.add('active');
+    }
+  } catch (error) {
+    window.showMessage('사용자 정보를 불러오는 중 오류가 발생했습니다.', 'error');
+  }
+};
+
+window.updateUser = async function () {
+  const name = document.getElementById('editName').value;
+  const userId = document.getElementById('editUserId').value;
+  const password = document.getElementById('editPassword').value;
+
+  if (!name || !userId || !password) {
+    window.showMessage('모든 필드를 입력하세요.', 'error');
+    return;
+  }
+
+  try {
+    await updateDoc(doc(db, 'users', window.appState.editingUserId), {
+      name: name,
+      userId: userId,
+      password: password
+    });
+
+    window.showMessage('심사위원 정보가 수정되었습니다.', 'success');
+    closeModal();
+    loadJudgesList();
+  } catch (error) {
+    window.showMessage('심사위원 정보 수정 중 오류가 발생했습니다.', 'error');
+  }
+};
+
+window.deleteUser = async function (userId) {
+  if (confirm('정말 이 심사위원을 삭제하시겠습니까?')) {
+    try {
+      await deleteDoc(doc(db, 'users', userId));
+      window.showMessage('심사위원이 삭제되었습니다.', 'success');
+      loadJudgesList();
+    } catch (error) {
+      window.showMessage('심사위원 삭제 중 오류가 발생했습니다.', 'error');
+    }
+  }
+};
+
+window.closeModal = function () {
+  document.getElementById('editModal').classList.remove('active');
+  window.appState.editingUserId = null;
+};
+
+// loadJudgeProjects 함수 - 점수 표시 수정
+window.loadJudgeProjects = async function () {
+  try {
+    const projectsSnapshot = await getDocs(collection(db, 'projects'));
+    const projectsList = document.getElementById('judgeProjectList');
+    projectsList.innerHTML = '';
+
+    // 현재 심사위원이 채점한 과제 목록과 점수 가져오기
+    const scoresQuery = query(collection(db, 'scores'), where("judgeId", "==", window.appState.currentUser.userId));
+    const scoresSnapshot = await getDocs(scoresQuery);
+    const scoresByProjectId = {};
+
+    scoresSnapshot.forEach(doc => {
+      const scoreData = doc.data();
+      scoresByProjectId[scoreData.projectId] = scoreData;
+    });
+
+    // 심사위원 정보
+    const judgesQuery = query(collection(db, 'users'), where("userId", "==", window.appState.currentUser.userId));
+    const judgesSnapshot = await getDocs(judgesQuery);
+    const sortedJudges = judgesSnapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    let userData = null;
+    sortedJudges.forEach(judge => {
+      userData = judge;
+    });
+
+    // 프로젝트 데이터를 배열로 수집
+    const projects = [];
+    for (const doc of projectsSnapshot.docs) {
+      const project = doc.data();
+      if (userData['name'].indexOf(project['teamName']) == 1) {
+        continue;
+      }
+
+      const isScored = scoresByProjectId.hasOwnProperty(doc.id);
+      const scoreData = scoresByProjectId[doc.id];
+
+      // 심사 기준 정보 가져오기 (총점 표시를 위해)
+      let maxScore = 100; // 기본값
+      if (project.criteriaId) {
+        try {
+          const criteriaDoc = await getDoc(doc(db, 'criteria', project.criteriaId));
+          if (criteriaDoc.exists()) {
+            maxScore = criteriaDoc.data().totalScore;
+          }
+        } catch (error) {
+          // 오류 무시
+        }
+      }
+
+      projects.push({
+        id: doc.id,
+        data: project,
+        isScored: isScored,
+        score: scoreData ? scoreData.totalScore : null,
+        maxScore: maxScore
+      });
+    }
+
+    // 조 이름으로 정렬 (오름차순)
+    // 숫자가 포함된 조 이름도 자연스럽게 정렬되도록 처리
+    projects.sort((a, b) => {
+      const teamA = a.data.teamName || '';
+      const teamB = b.data.teamName || '';
+
+      // 숫자 추출을 위한 정규식
+      const numA = parseInt(teamA.match(/\d+/) || '999');
+      const numB = parseInt(teamB.match(/\d+/) || '999');
+
+      // 숫자가 있으면 숫자로 비교, 없으면 문자열로 비교
+      if (!isNaN(numA) && !isNaN(numB)) {
+        return numA - numB;
+      }
+      return teamA.localeCompare(teamB, 'ko');
+    });
+
+    // 정렬된 순서로 프로젝트 카드 생성
+    projects.forEach(({ id, data: project, isScored, score, maxScore }) => {
+      const categoryClass = project.criteriaCategory ?
+        (project.criteriaCategory.includes('자유') ? 'category-free' :
+          project.criteriaCategory.includes('과제') ? 'category-challenge' : 'category-etc') :
+        'category-etc';
+
+      const projectCard = document.createElement('div');
+      projectCard.className = `card project-item ${isScored ? 'completed' : ''}`;
+      projectCard.innerHTML = `
+                        <div class="project-info">
+                            <div style="flex: 1;">
+                                <div style="margin-bottom: 8px;">
+                                    ${project.teamName ? `<span class="team-badge">${project.teamName}</span>` : ''}
+                                    <span class="project-title">${project.title}</span>
+                                    ${isScored ? '<span class="completed-check">✓</span>' : ''}
+                                </div>
+                                <div class="project-meta" style="margin-top: 10px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+                                    ${isScored ? `
+                                        <span class="judge-score-badge">${score}</span>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+      projectCard.onclick = () => showScoringForm(id, project, projectCard);
+      projectsList.appendChild(projectCard);
+    });
+  } catch (error) {
+    // 오류 무시
+  }
+};
+
+window.showScoringForm = async function (projectId, project, element) {
+  // 기존 채점 폼이 있으면 제거
+  const existingForm = document.getElementById('scoringForm');
+
+  // 같은 과제를 다시 클릭한 경우 폼을 닫기만 함
+  if (existingForm && existingForm.dataset.projectId === projectId) {
+    existingForm.remove();
+    return;
+  }
+
+  // 다른 과제의 폼이 열려있으면 제거
+  if (existingForm) existingForm.remove();
+
+  // 심사 기준 정보 가져오기
+  let criteriaData = null;
+  if (project.criteriaId) {
+    try {
+      const criteriaDoc = await getDoc(doc(db, 'criteria', project.criteriaId));
+      if (criteriaDoc.exists()) {
+        criteriaData = criteriaDoc.data();
+      }
+    } catch (error) {
+      window.showMessage('심사기준을 불러오는 중 오류가 발생했습니다.', 'error');
+      return;
+    }
+  }
+
+  if (!criteriaData) {
+    window.showMessage('이 과제의 심사기준이 설정되지 않았습니다.', 'error');
+    return;
+  }
+
+  // 기존 점수 확인
+  let existingScore = null;
+  try {
+    const scoresQuery = query(collection(db, 'scores'),
+      where("projectId", "==", projectId),
+      where("judgeId", "==", window.appState.currentUser.userId)
+    );
+    const scoresSnapshot = await getDocs(scoresQuery);
+
+    if (!scoresSnapshot.empty) {
+      existingScore = {
+        id: scoresSnapshot.docs[0].id,
+        ...scoresSnapshot.docs[0].data()
+      };
+    }
+  } catch (error) {
+    // 오류 무시
+  }
+
+  const scoringForm = document.createElement('div');
+  scoringForm.id = 'scoringForm';
+  scoringForm.className = 'scoring-section';
+  scoringForm.dataset.projectId = projectId; // 프로젝트 ID 저장
+
+  let existingScoreHtml = '';
+  if (existingScore) {
+    existingScoreHtml = `
+                    <div class="existing-score">
+                        <h4>기존 채점 내역</h4>
+                        ${criteriaData.items.filter(item => item.type === 'number').map(item => `
+                            <div class="score-detail">
+                                <div style="color: #ffffff;">${item.name} <span style="color: #32CD32;">${item.score}%</span></div>
+                                <span style="color: #ffffff;">${existingScore.itemScores?.[item.name] || 0}점</span>
+                            </div>
+                        `).join('')}
+                        <hr style="margin: 10px 0;"/>
+                        <div class="score-detail">
+                            <span style="color: #ffffff;">총점</span>
+                            <span><strong style="color: #FF69B4;">${existingScore.totalScore}점</strong></span>
+                        </div>
+                        ${existingScore.review ? `
+                            <div class="score-detail">
+                                <span style="color: #ffffff;">총평:</span>
+                                <span style="color: #ffffff;">${existingScore.review}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+  }
+
+  scoringForm.innerHTML = `
+                <h3 style="color: #ffffff;">채점하기: ${project.teamName ? project.teamName + ' - ' : ''}${project.title}</h3>
+                <div style="margin: 10px 0; color: #FF69B4; font-size: 0.9rem;">
+                    💡 팁: 과제를 다시 클릭하면 채점 창이 닫힙니다.
+                </div>
+
+                ${existingScoreHtml}
+
+                <h4 style="margin-top: 40px; color: #ffffff;">심사기준 - <strong style="color: #32CD32;">${criteriaData.description}</strong></h4>
+
+                ${criteriaData.items.map(item => {
+    if (item.type === 'number') {
+      return `
+                            <div class="score-input">
+                                <label style="color: #ffffff;">
+                                    ${item.name}
+                                    <span style="color: #32CD32;">${item.score}%</span>
+                                    ${item.required ? '<span style="color: #FF69B4; font-size: 0.9rem;">(필수)</span>' : ''}
+                                </label>
+                                <select
+                                    id="score_${item.name}"
+                                    data-max="${item.score}"
+                                    data-name="${item.name}"
+                                    data-required="${item.required}"
+                                    onchange="validateItemScore(this); calculateTotal();">
+
+                                    <option value="">선택하세요</option>
+
+                                    ${[...Array(10)].map((_, i) => {
+                                        const v = i + 1;
+                                        const selected = (existingScore?.itemScores?.[item.name] == v) ? 'selected' : '';
+                                        return `<option value="${v}" ${selected}>${v}</option>`;
+                                      }).join('')}
+                                </select>
+                            </div>
+                        `;
+    } else {
+      return `
+                            <div class="form-group">
+                                <label style="color: #ffffff;">${item.name} ${item.required ? '<span style="color: #32CD32;">(필수)</span>' : ''}</label>
+                                <textarea id="text_${item.name}"
+                                          rows="4"
+                                          placeholder="${item.name}을(를) 입력하세요"
+                                          data-name="${item.name}"
+                                          data-required="${item.required}">${existingScore?.textItems?.[item.name] || ''}</textarea>
+                            </div>
+                        `;
+    }
+  }).join('')}
+
+                <div class="total-score" id="totalScore">총점: 0점</div>
+
+                <button onclick="submitDynamicScore('${projectId}', '${criteriaData.totalScore}')">${existingScore ? '점수 수정' : '채점 제출'}</button>
+            `;
+
+  // 클릭한 과제 카드 바로 아래에 채점 폼 삽입
+  element.parentNode.insertBefore(scoringForm, element.nextSibling);
+
+  // 초기 총점 계산
+  calculateTotal();
+
+  // 스크롤 이동
+  scoringForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+};
+
+window.validateItemScore = function (input) {
+  const value = parseFloat(input.value);
+  const maxScore = parseFloat(input.dataset.max);
+  const itemName = input.dataset.name;
+
+  if (value < 0) {
+    window.showMessage(`${itemName} 점수는 0점 이상이어야 합니다.`, 'error');
+    input.value = 0;
+  } else if (value > maxScore) {
+    window.showMessage(`${itemName} 점수는 ${maxScore}점을 초과할 수 없습니다.`, 'error');
+    input.value = maxScore;
+  }
+};
+
+window.calculateTotal = function () {
+  let total = 0;
+  const scoreInputs = document.querySelectorAll('#scoringForm select');
+
+  scoreInputs.forEach(input => {
+    const value = parseFloat(input.value) || 0;
+    const maxScore = parseFloat(input.dataset.max);
+    total += parseFloat(value * maxScore / 100) || 0;
+  });
+  total = Math.round(total * 10 ) / 10;
+
+  const totalElement = document.getElementById('totalScore');
+  if (totalElement) {
+    const maxScore = totalElement.textContent.split('/')[1]?.trim().replace('점', '') || '100';
+    totalElement.textContent = `총점: ${total}점`;
+  }
+};
+
+window.submitDynamicScore = async function (projectId, maxTotalScore) {
+  const itemScores = {};
+  const textItems = {};
+  let totalScore = 0;
+
+  // 숫자 항목 수집 및 검증
+  const scoreInputs = document.querySelectorAll('#scoringForm select');
+  for (const input of scoreInputs) {
+    const value = parseFloat(input.value) || 0;
+    const maxScore = parseFloat(input.dataset.max);
+    const itemName = input.dataset.name;
+    const required = input.dataset.required === 'true';
+
+    const num = Number(value);
+
+    // required여도 0은 허용. 비어있거나 숫자가 아니면 에러
+    if (required && (value === '' || value === null || value === undefined || Number.isNaN(num))) {
+      window.showMessage(`필수 항목 "${itemName}"을(를) 채점해주세요.`, 'error');
+      return;
+    }
+
+    if (num < 0 || num > maxScore) {
+      window.showMessage(`${itemName} 점수는 0-${maxScore}점 사이여야 합니다.`, 'error');
+      return;
+    }
+
+    itemScores[itemName] = value;
+    totalScore += parseFloat(value * maxScore / 100) || 0;
+  }
+  totalScore = Math.round(totalScore * 10 ) / 10;
+
+  // 텍스트 항목 수집 및 검증
+  const textInputs = document.querySelectorAll('#scoringForm textarea');
+  for (const input of textInputs) {
+    const value = input.value.trim();
+    const itemName = input.dataset.name;
+    const required = input.dataset.required === 'true';
+
+    if (required && !value) {
+      window.showMessage(`필수 항목 "${itemName}"을(를) 입력해주세요.`, 'error');
+      return;
+    }
+
+    textItems[itemName] = value;
+  }
+
+  // 총평 찾기 (기본 총평 필드가 있을 수 있음)
+  let review = '';
+  const reviewTextarea = document.getElementById('text_총평');
+  if (reviewTextarea) {
+    review = reviewTextarea.value;
+  } else {
+    // 텍스트 항목 중 첫 번째를 총평으로 사용
+    const textValues = Object.values(textItems);
+    if (textValues.length > 0) {
+      review = textValues[0];
+    }
+  }
+
+  try {
+    // 기존 점수가 있는지 확인
+    const scoresQuery = query(collection(db, 'scores'),
+      where("projectId", "==", projectId),
+      where("judgeId", "==", window.appState.currentUser.userId)
+    );
+    const scoresSnapshot = await getDocs(scoresQuery);
+
+    const scoreData = {
+      projectId: projectId,
+      judgeId: window.appState.currentUser.userId,
+      judgeName: window.appState.currentUser.name,
+      itemScores: itemScores,
+      textItems: textItems,
+      totalScore: totalScore,
+      review: review,
+      updatedAt: new Date()
+    };
+
+    if (!scoresSnapshot.empty) {
+      // 기존 점수 업데이트
+      const scoreDoc = scoresSnapshot.docs[0];
+      await updateDoc(doc(db, 'scores', scoreDoc.id), scoreData);
+      window.showMessage('채점이 수정되었습니다!', 'success');
+    } else {
+      // 새로운 점수 추가
+      scoreData.createdAt = new Date();
+      await addDoc(collection(db, 'scores'), scoreData);
+      window.showMessage('채점이 완료되었습니다!', 'success');
+    }
+
+    document.getElementById('scoringForm').remove();
+    loadJudgeProjects(); // 목록 새로고침
+  } catch (error) {
+    window.showMessage('채점 제출 중 오류가 발생했습니다.', 'error');
+  }
+};
+
+// 초기 관리자 계정 생성 (최초 실행 시)
+async function initAdmin() {
+  try {
+    const q = query(collection(db, 'users'), where("userId", "==", "admin"));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      await addDoc(collection(db, 'users'), {
+        name: "관리자",
+        userId: "admin",
+        password: "init1234",
+        role: "admin",
+        createdAt: new Date()
+      });
+    }
+  } catch (error) {
+    // 오류 무시
+  }
+}
+
+// Enter 키 이벤트 처리
+document.getElementById('loginId').addEventListener('keypress', function (e) {
+  if (e.key === 'Enter') {
+    document.getElementById('loginPassword').focus();
+  }
+});
+
+document.getElementById('loginPassword').addEventListener('keypress', function (e) {
+  if (e.key === 'Enter') {
+    login();
+  }
+});
+
+// 페이지 로드 시 초기화
+initAdmin();
+
+// 페이지 로드 시 로그인 상태 확인
+document.addEventListener('DOMContentLoaded', function () {
+  try {
+    const savedUser = sessionStorage.getItem('currentUser');
+    if (savedUser) {
+      window.appState.currentUser = JSON.parse(savedUser);
+
+      // Firebase 초기화 완료 후 상태 복원
+      setTimeout(() => {
+        if (window.appState.currentUser) {
+          document.getElementById('loginPage').classList.remove('active');
+
+          if (window.appState.currentUser.role === 'admin') {
+            document.getElementById('adminPage').classList.add('active');
+            loadAdminData();
+          } else if (window.appState.currentUser.role === 'judge') {
+            document.getElementById('judgePage').classList.add('active');
+            document.getElementById('judgeName').textContent = window.appState.currentUser.name;
+            loadJudgeProjects();
+          }
+        }
+      }, 500); // Firebase 초기화를 위한 약간의 지연
+    }
+  } catch (e) {
+    // sessionStorage 사용 불가 시 무시
+  }
+});
+</script>
+</body>
+
+</html>

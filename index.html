@@ -589,7 +589,7 @@
 
       if (user.role === 'judge') {
         showOnlyPage('judgePage');
-        byId('judgeName').textContent = judgeDisplayName(user.name, user.position);
+        byId('judgeName').textContent = judgeDisplayName(user.name);
         await window.loadJudgeProjects();
         return;
       }
@@ -1132,7 +1132,7 @@
 
         const user = { id: userSnapshot.id, ...userSnapshot.data() };
         saveSession(user);
-        byId('judgeName').textContent = judgeDisplayName(user.name, user.position);
+        byId('judgeName').textContent = judgeDisplayName(user.name);
         byId('judgeProfile').textContent = `${user.position || '직책 미설정'} · ${user.organization || '소속 조직 미설정'}`;
 
         const [projectsSnapshot, voteSnapshot] = await Promise.all([

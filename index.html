@@ -4,2055 +4,1474 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NW통신기술경진대회</title>
+  <title>NW통신기술경진대회 투표 플랫폼</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    .header-inner,
+    .card-header,
+    .vote-choice-row,
+    .summary-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .header-inner h1 {
+      text-align: left;
+    }
+
+    .header-actions,
+    .badge-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .header-actions .logout-btn {
+      border-radius: 10px;
+    }
+
+    .profile-line {
+      margin-top: 6px;
+      color: var(--text-sub, #b7c0cc);
+      font-size: 0.95rem;
+    }
+
+    .summary-bar {
+      justify-content: flex-start;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .summary-chip,
+    .organization-badge,
+    .position-badge,
+    .vote-count,
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 5px 11px;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .summary-chip,
+    .organization-badge {
+      background: #253046;
+      color: #cbd9f1;
+    }
+
+    .position-badge {
+      background: #3a2d40;
+      color: #f1a7c6;
+    }
+
+    .vote-count,
+    .status-badge.success {
+      background: #203d34;
+      color: #94d8bd;
+    }
+
+    .status-badge.warning {
+      background: #493c24;
+      color: #f5d687;
+    }
+
+    .admin-project-card,
+    .vote-choice {
+      cursor: default;
+    }
+
+    .project-copy {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .project-copy .project-title {
+      display: block;
+      margin-bottom: 10px;
+      overflow-wrap: anywhere;
+    }
+
+    .project-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .project-actions button {
+      padding: 9px 16px;
+    }
+
+    .voter-details {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border, #2a2f3a);
+      color: var(--text-sub, #b7c0cc);
+    }
+
+    .voter-details summary {
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .voter-list {
+      margin: 12px 0 0 20px;
+      line-height: 1.8;
+    }
+
+    .empty-state,
+    .notice-card {
+      padding: 24px;
+      border: 1px dashed var(--border, #2a2f3a);
+      border-radius: 14px;
+      color: var(--text-sub, #b7c0cc);
+      text-align: center;
+    }
+
+    .notice-card {
+      margin-bottom: 20px;
+      text-align: left;
+      line-height: 1.7;
+    }
+
+    .vote-choice {
+      display: block;
+      color: inherit !important;
+    }
+
+    .vote-choice-row {
+      justify-content: flex-start;
+    }
+
+    .vote-choice input[type="radio"] {
+      width: 22px;
+      height: 22px;
+      margin: 0;
+      flex: 0 0 auto;
+      accent-color: var(--brand-1, #d67ab1);
+    }
+
+    .vote-choice.is-selected {
+      border-color: var(--brand-1, #d67ab1) !important;
+      box-shadow: 0 0 0 2px rgba(214, 122, 177, 0.22) !important;
+    }
+
+    .vote-choice.is-disabled {
+      opacity: 0.58;
+      cursor: not-allowed;
+    }
+
+    .disabled-reason {
+      display: block;
+      margin-top: 9px;
+      color: #e7a5a5;
+      font-size: 0.88rem;
+    }
+
+    .vote-footer {
+      position: sticky;
+      bottom: 0;
+      z-index: 5;
+      margin-top: 22px;
+      padding: 16px;
+      border: 1px solid var(--border, #2a2f3a);
+      border-radius: 14px;
+      background: rgba(20, 24, 33, 0.96);
+      backdrop-filter: blur(10px);
+    }
+
+    .vote-footer button {
+      width: 100%;
+    }
+
+    .current-vote-status {
+      margin-bottom: 12px;
+      color: var(--text-sub, #b7c0cc);
+      text-align: center;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+      transform: none !important;
+    }
+
+    .user-meta {
+      margin-top: 8px;
+    }
+
+    @media (max-width: 720px) {
+      .header-inner,
+      .card-header,
+      .vote-choice-row {
+        align-items: flex-start;
+      }
+
+      .header-inner,
+      .card-header {
+        flex-direction: column;
+      }
+
+      .header-actions,
+      .project-actions {
+        width: 100%;
+      }
+
+      .header-actions button,
+      .project-actions button {
+        flex: 1;
+      }
+
+      .user-card {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .user-card .action-buttons {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 
 <body>
-<div class="message-container" id="messageContainer"></div>
+  <div class="message-container" id="messageContainer" aria-live="polite"></div>
 
-<div id="loginPage" class="page active">
-  <div class="login-container">
-    <h2>NW통신기술경진대회<br/>심사 플랫폼</h2>
-    <div class="form-group">
-      <label for="loginId">아이디</label>
-      <input type="text" id="loginId" placeholder="아이디를 입력하세요">
-    </div>
-    <div class="form-group">
-      <label for="loginPassword">비밀번호</label>
-      <input type="password" id="loginPassword" placeholder="비밀번호를 입력하세요">
-    </div>
-    <div style="text-align: center;">
-      <button onclick="login()">로그인</button>
-    </div>
-  </div>
-</div>
+  <main id="loginPage" class="page active">
+    <form class="login-container" onsubmit="login(event)">
+      <h2>NW통신기술경진대회<br>투표 플랫폼</h2>
+      <div class="form-group">
+        <label for="loginId">아이디</label>
+        <input type="text" id="loginId" autocomplete="username" placeholder="아이디를 입력하세요" required>
+      </div>
+      <div class="form-group">
+        <label for="loginPassword">비밀번호</label>
+        <input type="password" id="loginPassword" autocomplete="current-password" placeholder="비밀번호를 입력하세요" required>
+      </div>
+      <div style="text-align: center;">
+        <button type="submit">로그인</button>
+      </div>
+    </form>
+  </main>
 
-<div id="adminPage" class="page">
-  <header>
+  <main id="adminPage" class="page">
+    <header>
+      <div class="container header-inner">
+        <h1>투표 플랫폼 · 관리자</h1>
+        <div class="header-actions">
+          <button type="button" class="logout-btn" onclick="logout()">로그아웃</button>
+        </div>
+      </div>
+    </header>
+
     <div class="container">
-      <h1>심사 플랫폼 - 관리자</h1>
-    </div>
-  </header>
-  <div class="container">
-    <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('projectList')">과제 목록</button>
-      <button class="tab-btn" onclick="switchTab('projectRegister')">과제 등록</button>
-      <button class="tab-btn" onclick="switchTab('criteriaManage')">심사항목 관리</button>
-      <button class="tab-btn" onclick="switchTab('criteriaCreate')">심사항목 등록</button>
-      <button class="tab-btn" onclick="switchTab('judges')">심사위원 관리</button>
-      <button class="tab-btn" onclick="switchTab('register')">심사위원 등록</button>
-      <button class="logout-btn" onclick="logout()" style="margin-left: auto;">로그아웃</button>
-    </div>
+      <nav class="tabs" aria-label="관리 메뉴">
+        <button type="button" class="tab-btn active" data-tab="projectList" onclick="switchTab('projectList', this)">과제 목록</button>
+        <button type="button" class="tab-btn" data-tab="projectRegister" onclick="switchTab('projectRegister', this)">과제 등록</button>
+        <button type="button" class="tab-btn" data-tab="judges" onclick="switchTab('judges', this)">심사위원 관리</button>
+        <button type="button" class="tab-btn" data-tab="register" onclick="switchTab('register', this)">심사위원 등록</button>
+      </nav>
 
-    <div id="projectListTab" class="tab-content active">
-      <h2>과제 목록</h2>
-      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-        <button class="reset-btn" onclick="resetProjects()">과제 초기화</button>
-        <button class="reset-btn" onclick="resetScores()">채점 내역 초기화</button>
-        <button class="export-btn" onclick="exportToCSV()">채점 내역 CSV 내보내기</button>
-      </div>
-      <div id="adminProjectList" class="project-list"></div>
-    </div>
+      <section id="projectListTab" class="tab-content active">
+        <h2>과제별 투표 현황</h2>
+        <div class="header-actions" style="margin-bottom: 18px;">
+          <button type="button" class="reset-btn" onclick="resetProjects()">과제 전체 삭제</button>
+          <button type="button" class="reset-btn" onclick="resetVotes()">투표 내역 초기화</button>
+          <button type="button" class="export-btn" onclick="exportVotesToCSV()">투표 결과 CSV</button>
+        </div>
+        <div id="voteSummary" class="summary-bar"></div>
+        <div id="adminProjectList" class="project-list"></div>
+      </section>
 
-    <div id="projectRegisterTab" class="tab-content">
-      <h2>과제 등록</h2>
-      <div class="card">
-        <div class="form-group">
-          <label>조 명</label>
-          <input type="text" id="teamName" placeholder="예: 1조, A팀">
-        </div>
-        <div class="form-group">
-          <label>과제명</label>
-          <input type="text" id="projectTitle" placeholder="과제명 입력">
-        </div>
-        <div class="form-group">
-          <label>참가자 (쉼표로 구분)</label>
-          <input type="text" id="projectParticipants" placeholder="예: 홍길동, 김철수, 이영희">
-        </div>
-        <div class="form-group">
-          <label>심사 카테고리</label>
-          <select id="projectCategory">
-            <option value="">선택하세요</option>
-          </select>
-        </div>
-        <button onclick="registerProject()">과제 등록</button>
-      </div>
-    </div>
-
-    <div id="criteriaCreateTab" class="tab-content">
-      <h2>심사항목 생성</h2>
-      <div class="card">
-        <div class="form-group">
-          <label>카테고리(부문)</label>
-          <input type="text" id="criteriaCategory" placeholder="예: 자유부문, 과제부문">
-        </div>
-        <div class="form-group">
-          <label>심사기준 설명</label>
-          <textarea id="criteriaDescription" rows="3" placeholder="심사기준에 대한 설명을 입력하세요"></textarea>
-        </div>
-
-        <h3>심사항목</h3>
-        <div id="criteriaItems">
-          <div class="criteria-item-input">
-            <div class="criteria-item-row">
-              <input type="text" placeholder="항목명" class="item-name">
-              <select class="item-type" onchange="toggleScoreInput(this)">
-                <option value="number">숫자</option>
-                <option value="text">총평</option>
-              </select>
-              <input type="number" placeholder="배점" class="item-score" min="0">
-              <div class="checkbox-label">
-                <input type="checkbox" class="item-required">
-                <span>필수</span>
-              </div>
-              <button class="remove-btn" onclick="removeCriteriaItem(this)">삭제</button>
-            </div>
+      <section id="projectRegisterTab" class="tab-content">
+        <h2>평가 대상 과제 등록</h2>
+        <form class="card" onsubmit="registerProject(event)">
+          <div class="form-group">
+            <label for="projectTitle">과제명</label>
+            <input type="text" id="projectTitle" placeholder="과제명을 입력하세요" required>
           </div>
+          <div class="form-group">
+            <label for="projectOrganization">과제 수행 조직</label>
+            <select id="projectOrganization" required></select>
+          </div>
+          <button type="submit">과제 등록</button>
+        </form>
+      </section>
+
+      <section id="judgesTab" class="tab-content">
+        <h2>심사위원 목록</h2>
+        <button type="button" class="reset-btn" onclick="resetJudges()">심사위원 전체 삭제</button>
+        <div id="judgesList" class="user-list"></div>
+      </section>
+
+      <section id="registerTab" class="tab-content">
+        <h2>심사위원 등록</h2>
+        <form class="card" onsubmit="registerUser(event)">
+          <div class="form-group">
+            <label for="userName">이름</label>
+            <input type="text" id="userName" placeholder="이름을 입력하세요" required>
+          </div>
+          <div class="form-group">
+            <label for="userId">아이디</label>
+            <input type="text" id="userId" placeholder="아이디를 입력하세요" required>
+          </div>
+          <div class="form-group">
+            <label for="userPosition">직책</label>
+            <select id="userPosition" required>
+              <option value="">선택하세요</option>
+              <option value="그룹장">그룹장</option>
+              <option value="담당">담당</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="userOrganization">소속 조직</label>
+            <select id="userOrganization" required></select>
+          </div>
+          <button type="submit">심사위원 등록</button>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <main id="judgePage" class="page">
+    <header>
+      <div class="container header-inner">
+        <div>
+          <h1><span id="judgeName"></span> 심사위원</h1>
+          <div id="judgeProfile" class="profile-line"></div>
         </div>
-        <button class="add-btn" onclick="addCriteriaItem()" style="margin-top: 10px;">+ 항목 추가</button>
-        <button onclick="saveCriteria()" style="margin-top: 20px;">심사항목 저장</button>
+        <div class="header-actions">
+          <button type="button" class="logout-btn" onclick="logout()">로그아웃</button>
+        </div>
       </div>
-    </div>
+    </header>
 
-    <div id="criteriaManageTab" class="tab-content">
-      <h2>심사항목 관리</h2>
-      <div id="criteriaList" class="criteria-list"></div>
-    </div>
-
-    <div id="judgesTab" class="tab-content">
-      <h2>심사위원 리스트</h2>
-      <button class="reset-btn" onclick="resetJudges()">심사위원 초기화</button>
-      <div id="judgesList" class="user-list"></div>
-    </div>
-
-    <div id="registerTab" class="tab-content">
-      <h2>심사위원 등록</h2>
-      <div class="card">
-        <div class="form-group">
-          <label>이름</label>
-          <input type="text" id="userName" placeholder="이름 입력">
-        </div>
-        <div class="form-group">
-          <label>아이디</label>
-          <input type="text" id="userId" placeholder="아이디 입력">
-        </div>
-        <button onclick="registerUser()">심사위원 등록</button>
+    <div class="container">
+      <h2>평가 대상 과제</h2>
+      <div class="notice-card">
+        가장 우수한 과제 하나만 선택할 수 있습니다. <strong>담당</strong> 심사위원은 본인과 같은 조직이 수행한 과제에 투표할 수 없으며, <strong>그룹장</strong>은 모든 과제에 투표할 수 있습니다.
       </div>
+      <form id="voteForm" onsubmit="submitVote(event)">
+        <div id="judgeProjectList" class="project-list"></div>
+        <div class="vote-footer">
+          <div id="currentVoteStatus" class="current-vote-status"></div>
+          <button type="submit" id="voteSubmitButton">투표하기</button>
+        </div>
+      </form>
     </div>
+  </main>
 
-    <div id="projectDetailView" style="display: none;">
-      <button class="back-btn" onclick="backToProjectList()">← 목록으로</button>
-      <div id="projectDetailContent"></div>
-    </div>
+  <div id="editUserModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="editUserTitle">
+    <form class="modal-content" onsubmit="updateUser(event)">
+      <h3 id="editUserTitle">심사위원 정보 수정</h3>
+      <div class="form-group">
+        <label for="editName">이름</label>
+        <input type="text" id="editName" required>
+      </div>
+      <div class="form-group">
+        <label for="editUserId">아이디</label>
+        <input type="text" id="editUserId" required>
+      </div>
+      <div class="form-group">
+        <label for="editPassword">비밀번호</label>
+        <input type="text" id="editPassword" required>
+      </div>
+      <div class="form-group">
+        <label for="editPosition">직책</label>
+        <select id="editPosition" required>
+          <option value="">선택하세요</option>
+          <option value="그룹장">그룹장</option>
+          <option value="담당">담당</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="editOrganization">소속 조직</label>
+        <select id="editOrganization" required></select>
+      </div>
+      <div class="action-buttons">
+        <button type="submit">수정</button>
+        <button type="button" onclick="closeUserModal()" style="background: #6c757d;">취소</button>
+      </div>
+    </form>
   </div>
-</div>
 
-<div id="judgePage" class="page">
-  <header>
-    <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
-      <h1 style="display: flex; align-items: center">
-        <span id="judgeName" style="color: #32CD32;"></span>님
-
-      </h1>
-      <a style="margin-left: 1rem; text-decoration: underline; text-underline-offset: 4px; font-size: 1rem;" onclick="logout()">로그아웃</a>
-    </div>
-  </header>
-  <div class="container">
-    <h2>과제 목록</h2>
-    <div id="judgeProjectList" class="project-list"></div>
+  <div id="editProjectModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="editProjectTitleLabel">
+    <form class="modal-content" onsubmit="updateProject(event)">
+      <h3 id="editProjectTitleLabel">과제 정보 수정</h3>
+      <div class="form-group">
+        <label for="editProjectTitle">과제명</label>
+        <input type="text" id="editProjectTitle" required>
+      </div>
+      <div class="form-group">
+        <label for="editProjectOrganization">과제 수행 조직</label>
+        <select id="editProjectOrganization" required></select>
+      </div>
+      <div class="action-buttons">
+        <button type="submit">수정</button>
+        <button type="button" onclick="closeProjectModal()" style="background: #6c757d;">취소</button>
+      </div>
+    </form>
   </div>
-</div>
 
-<div id="editModal" class="modal">
-  <div class="modal-content">
-    <h3>심사위원 정보 수정</h3>
-    <div class="form-group">
-      <label>이름</label>
-      <input type="text" id="editName" placeholder="이름 입력">
-    </div>
-    <div class="form-group">
-      <label>아이디</label>
-      <input type="text" id="editUserId" placeholder="아이디 입력">
-    </div>
-    <div class="form-group">
-      <label>비밀번호</label>
-      <input type="text" id="editPassword" placeholder="비밀번호 입력">
-    </div>
-    <div class="action-buttons">
-      <button onclick="updateUser()">수정</button>
-      <button onclick="closeModal()" style="background: #6c757d;">취소</button>
-    </div>
-  </div>
-</div>
-
-<div id="projectEditModal" class="modal">
-  <div class="modal-content">
-    <h3>과제 수정</h3>
-    <div class="form-group">
-      <label>조 명</label>
-      <input type="text" id="editTeamName" placeholder="예: 1조, A팀">
-    </div>
-    <div class="form-group">
-      <label>과제명</label>
-      <input type="text" id="editProjectTitle" placeholder="과제명 입력">
-    </div>
-    <div class="form-group">
-      <label>참가자 (쉼표로 구분)</label>
-      <input type="text" id="editProjectParticipants" placeholder="예: 홍길동, 김철수, 이영희">
-    </div>
-    <div class="form-group">
-      <label>심사 카테고리</label>
-      <select id="editProjectCategory">
-        <option value="">선택하세요</option>
-      </select>
-    </div>
-    <div class="action-buttons">
-      <button onclick="updateProject()">수정</button>
-      <button onclick="closeProjectModal()" style="background: #6c757d;">취소</button>
-    </div>
-  </div>
-</div>
-<div id="criteriaEditModal" class="modal">
-  <div class="modal-content">
-    <h3>심사항목 수정</h3>
-    <div class="form-group">
-      <label>카테고리(부문)</label>
-      <input type="text" id="editCriteriaCategory" placeholder="예: 자유부문, 과제부문">
-    </div>
-    <div class="form-group">
-      <label>심사기준 설명</label>
-      <textarea id="editCriteriaDescription" rows="3" placeholder="심사기준에 대한 설명을 입력하세요"></textarea>
-    </div>
-
-    <h3>심사항목</h3>
-    <div id="editCriteriaItems"></div>
-    <button class="add-btn" onclick="addEditCriteriaItem()" style="margin-top: 10px;">+ 항목 추가</button>
-
-    <div class="action-buttons" style="margin-top: 20px;">
-      <button onclick="updateCriteria()">수정</button>
-      <button onclick="closeCriteriaModal()" style="background: #6c757d;">취소</button>
-    </div>
-  </div>
-</div>
-
-<script type="module">// 전역 함수들을 먼저 정의
-window.appState = {
-  currentUser: null,
-  projects: [],
-  users: [],
-  scores: [],
-  criteria: [],
-  editingUserId: null,
-  editingCriteriaId: null,
-  editingProjectId: null
-};
-
-// 메시지 표시 함수
-window.showMessage = function (message, type = 'info') {
-  const messageContainer = document.getElementById('messageContainer');
-  const messageEl = document.createElement('div');
-  messageEl.className = `${type}-message`;
-  messageEl.textContent = message;
-
-  messageContainer.innerHTML = '';
-  messageContainer.appendChild(messageEl);
-
-  setTimeout(() => {
-    messageEl.style.opacity = '0';
-    setTimeout(() => messageContainer.innerHTML = '', 300);
-  }, 3000);
-};
-
-// 로그인 상태 확인 및 복원
-window.checkLoginStatus = function () {
-  // 메모리에서 로그인 정보 확인
-  if (window.appState && window.appState.currentUser) {
-    const userData = window.appState.currentUser;
-
-    document.getElementById('loginPage').classList.remove('active');
-
-    if (userData.role === 'admin') {
-      document.getElementById('adminPage').classList.add('active');
-      if (window.loadAdminData) window.loadAdminData();
-    } else if (userData.role === 'judge') {
-      document.getElementById('judgePage').classList.add('active');
-      document.getElementById('judgeName').textContent = userData.name;
-      if (window.loadJudgeProjects) window.loadJudgeProjects();
-    }
-  }
-};
-
-window.login = async function () {
-  // Firebase가 로드될 때까지 기다림
-  if (!window.db) {
-    showMessage('시스템 초기화 중입니다. 잠시 후 다시 시도해주세요.', 'error');
-    return;
-  }
-
-  const id = document.getElementById('loginId').value;
-  const password = document.getElementById('loginPassword').value;
-
-  if (!id || !password) {
-    showMessage('아이디와 비밀번호를 입력하세요.', 'error');
-    return;
-  }
-
-  try {
-    const usersRef = window.db.collection('users');
-    const q = window.db.query(usersRef, window.db.where("userId", "==", id), window.db.where("password", "==", password));
-    const querySnapshot = await window.db.getDocs(q);
-
-    if (!querySnapshot.empty) {
-      const userDoc = querySnapshot.docs[0];
-      const userData = userDoc.data();
-
-      // 전역 상태에 사용자 정보 저장 (메모리)
-      window.appState.currentUser = {
-        id: userDoc.id,
-        ...userData
-      };
-
-      // sessionStorage에도 저장 (새로고침 대응)
-      try {
-        sessionStorage.setItem('currentUser', JSON.stringify(window.appState.currentUser));
-      } catch (e) {
-        // sessionStorage 사용 불가 시 무시
-      }
-
-      document.getElementById('loginPage').classList.remove('active');
-
-      if (userData.role === 'admin') {
-        document.getElementById('adminPage').classList.add('active');
-        window.loadAdminData();
-      } else if (userData.role === 'judge') {
-        document.getElementById('judgePage').classList.add('active');
-        // 심사위원 이름 표시
-        document.getElementById('judgeName').textContent = userData.name;
-        window.loadJudgeProjects();
-      }
-    } else {
-      showMessage('아이디 또는 비밀번호가 올바르지 않습니다.', 'error');
-    }
-  } catch (error) {
-    console.log(error);
-    showMessage('로그인 중 오류가 발생했습니다.', 'error');
-  }
-};
-
-
-
-// 심사항목 관련 함수
-window.addCriteriaItem = function () {
-  const container = document.getElementById('criteriaItems');
-  const itemDiv = document.createElement('div');
-  itemDiv.className = 'criteria-item-input';
-  itemDiv.innerHTML = `
-                <div class="criteria-item-row">
-                    <input type="text" placeholder="항목명" class="item-name">
-                    <select class="item-type" onchange="toggleScoreInput(this)">
-                        <option value="number">숫자</option>
-                        <option value="text">총평</option>
-                    </select>
-                    <input type="number" placeholder="배점" class="item-score" min="0">
-                    <div class="checkbox-label">
-                        <input type="checkbox" class="item-required">
-                        <span>필수</span>
-                    </div>
-                    <button class="remove-btn" onclick="removeCriteriaItem(this)">삭제</button>
-                </div>
-            `;
-  container.appendChild(itemDiv);
-};
-
-window.addEditCriteriaItem = function () {
-  const container = document.getElementById('editCriteriaItems');
-  const itemDiv = document.createElement('div');
-  itemDiv.className = 'criteria-item-input';
-  itemDiv.innerHTML = `
-                <div class="criteria-item-row">
-                    <input type="text" placeholder="항목명" class="item-name">
-                    <select class="item-type" onchange="toggleScoreInput(this)">
-                        <option value="number">숫자</option>
-                        <option value="text">총평</option>
-                    </select>
-                    <input type="number" placeholder="배점" class="item-score" min="0">
-                    <div class="checkbox-label">
-                        <input type="checkbox" class="item-required">
-                        <span>필수</span>
-                    </div>
-                    <button class="remove-btn" onclick="removeCriteriaItem(this)">삭제</button>
-                </div>
-            `;
-  container.appendChild(itemDiv);
-};
-
-window.removeCriteriaItem = function (button) {
-  button.closest('.criteria-item-input').remove();
-};
-
-window.toggleScoreInput = function (select) {
-  const scoreInput = select.parentElement.querySelector('.item-score');
-  if (select.value === 'text') {
-    scoreInput.style.display = 'none';
-    scoreInput.value = 0;
-  } else {
-    scoreInput.style.display = 'block';
-  }
-};
-
-window.closeCriteriaModal = function () {
-  const modal = document.getElementById('criteriaEditModal');
-  modal.classList.remove('active');
-  modal.style.display = 'none';
-  window.appState.editingCriteriaId = null;
-};
-
-// 나머지 전역 함수들도 여기에 정의
-window.logout = function () {
-  if (confirm('정말 로그아웃 하시겠습니까?')) {
-    // 세션 정보 삭제
-    window.appState.currentUser = null;
-    try {
-      sessionStorage.removeItem('currentUser');
-    } catch (e) {
-      // sessionStorage 사용 불가 시 무시
-    }
-
-    // 로그인 페이지로 이동
-    document.getElementById('adminPage').classList.remove('active');
-    document.getElementById('judgePage').classList.remove('active');
-    document.getElementById('loginPage').classList.add('active');
-
-    // 로그인 폼 초기화
-    document.getElementById('loginId').value = '';
-    document.getElementById('loginPassword').value = '';
-
-    showMessage('로그아웃되었습니다.', 'info');
-  }
-};
-window.registerUser = function () { };
-window.registerProject = function () { };
-window.switchTab = function (tabName) { };
-window.loadAdminData = function () { };
-window.loadAdminProjects = function () { };
-window.showProjectDetail = function (projectId) { };
-window.backToProjectList = function () { };
-window.exportToCSV = function () { };
-window.deleteProject = function (projectId) { };
-window.resetProjects = function () { };
-window.resetScores = function () { };
-window.resetJudges = function () { };
-window.loadJudgesList = function () { };
-window.editUser = function (userId) { };
-window.updateUser = function () { };
-window.deleteUser = function (userId) { };
-window.closeModal = function () { };
-window.loadJudgeProjects = function () { };
-window.showScoringForm = function (projectId, project, element) { };
-window.validateScore = function (input, maxScore) { };
-window.calculateTotal = function () { };
-window.submitScore = function (projectId) { };
-window.saveCriteria = function () { };
-window.loadCriteria = function () { };
-window.loadCategoriesForProject = function () { };
-window.editCriteria = function (criteriaId) { };
-window.updateCriteria = function () { };
-window.deleteCriteria = function (criteriaId) { };
-window.editProject = function (projectId) { };
-window.updateProject = function () { };
-window.closeProjectModal = function () { };
-window.loadCategoriesForEditProject = function () { };
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  setDoc,
-  getDocs,
-  doc,
-  updateDoc,
-  deleteDoc,
-  query,
-  where,
-  getDoc
-} from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyAioCv4Fix5U7Nj-iXgdwNwQcPtLxOfgIE",
-  authDomain: "nwctc-b9e7c.firebaseapp.com",
-  projectId: "nwctc-b9e7c",
-  storageBucket: "nwctc-b9e7c.firebasestorage.app",
-  messagingSenderId: "884751378263",
-  appId: "1:884751378263:web:63f102fe2f0245b1f0c012"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-// Firebase 함수들을 전역으로 노출
-window.db = {
-  collection: (name) => collection(db, name),
-  addDoc: addDoc,
-  setDoc: setDoc,
-  getDocs: getDocs,
-  getDoc: getDoc,
-  doc: (collectionName, docId) => doc(db, collectionName, docId),
-  updateDoc: updateDoc,
-  deleteDoc: deleteDoc,
-  query: query,
-  where: where
-};
-
-// 실제 함수 구현
-window.login = async function () {
-  const id = document.getElementById('loginId').value;
-  const password = document.getElementById('loginPassword').value;
-
-  if (!id || !password) {
-    window.showMessage('아이디와 비밀번호를 입력하세요.', 'error');
-    return;
-  }
-
-  try {
-    await ensureDatabaseInitialized();
-
-    const usersRef = collection(db, 'users');
-    const q = query(usersRef, where("userId", "==", id), where("password", "==", password));
-    const querySnapshot = await getDocs(q);
-
-    if (!querySnapshot.empty) {
-      const userDoc = querySnapshot.docs[0];
-      const userData = userDoc.data();
-
-      // 전역 상태에 사용자 정보 저장
-      window.appState.currentUser = {
-        id: userDoc.id,
-        ...userData
-      };
-
-      // sessionStorage에도 저장 (새로고침 대응)
-      try {
-        sessionStorage.setItem('currentUser', JSON.stringify(window.appState.currentUser));
-      } catch (e) {
-        // sessionStorage 사용 불가 시 무시
-      }
-
-      document.getElementById('loginPage').classList.remove('active');
-
-      if (userData.role === 'admin') {
-        document.getElementById('adminPage').classList.add('active');
-        loadAdminData();
-      } else if (userData.role === 'judge') {
-        document.getElementById('judgePage').classList.add('active');
-        // 심사위원 이름 표시
-        document.getElementById('judgeName').textContent = userData.name;
-        loadJudgeProjects();
-      }
-    } else {
-      window.showMessage('아이디 또는 비밀번호가 올바르지 않습니다.', 'error');
-    }
-  } catch (error) {
-    console.log(error);
-    window.showMessage('로그인 중 오류가 발생했습니다.', 'error');
-  }
-};
-
-window.registerUser = async function () {
-  const name = document.getElementById('userName').value;
-  const userId = document.getElementById('userId').value;
-
-  if (!name || !userId) {
-    window.showMessage('이름과 아이디를 입력하세요.', 'error');
-    return;
-  }
-
-  const randomNumbers = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-  const password = userId + randomNumbers;
-
-  try {
-    await addDoc(collection(db, 'users'), {
-      name: name,
-      userId: userId,
-      password: password,
-      role: 'judge',
-      createdAt: new Date()
-    });
-
-    window.showMessage(`등록 완료! 아이디: ${userId}, 비밀번호: ${password}`, 'success');
-
-    document.getElementById('userName').value = '';
-    document.getElementById('userId').value = '';
-
-    loadJudgesList();
-  } catch (error) {
-    window.showMessage('심사위원 등록 중 오류가 발생했습니다.', 'error');
-  }
-};
-
-window.saveCriteria = async function () {
-  const category = document.getElementById('criteriaCategory').value;
-  const description = document.getElementById('criteriaDescription').value;
-
-  if (!category || !description) {
-    window.showMessage('카테고리와 심사기준을 입력하세요.', 'error');
-    return;
-  }
-
-  const items = [];
-  const itemElements = document.querySelectorAll('#criteriaItems .criteria-item-input');
-
-  let totalScore = 0;
-  for (const element of itemElements) {
-    const name = element.querySelector('.item-name').value;
-    const type = element.querySelector('.item-type').value;
-    const score = type === 'number' ? parseInt(element.querySelector('.item-score').value) || 0 : 0;
-    const required = element.querySelector('.item-required').checked;
-
-    if (!name) {
-      window.showMessage('모든 항목명을 입력하세요.', 'error');
-      return;
-    }
-
-    if (type === 'number' && score <= 0) {
-      window.showMessage('숫자 유형 항목은 배점을 입력해야 합니다.', 'error');
-      return;
-    }
-
-    totalScore += score;
-    items.push({ name, type, score, required });
-  }
-
-  if (items.length === 0) {
-    window.showMessage('최소 하나 이상의 심사항목을 추가하세요.', 'error');
-    return;
-  }
-
-  try {
-    await addDoc(collection(db, 'criteria'), {
-      category,
-      description,
-      items,
-      totalScore,
-      createdAt: new Date(),
-      createdBy: window.appState.currentUser.userId
-    });
-
-    window.showMessage('심사항목이 저장되었습니다.', 'success');
-
-    // 폼 초기화
-    document.getElementById('criteriaCategory').value = '';
-    document.getElementById('criteriaDescription').value = '';
-    document.getElementById('criteriaItems').innerHTML = `
-                    <div class="criteria-item-input">
-                        <div class="criteria-item-row">
-                            <input type="text" placeholder="항목명" class="item-name">
-                            <select class="item-type" onchange="toggleScoreInput(this)">
-                                <option value="number">숫자</option>
-                                <option value="text">총평</option>
-                            </select>
-                            <input type="number" placeholder="배점" class="item-score" min="0">
-                            <div class="checkbox-label">
-                                <input type="checkbox" class="item-required">
-                                <span>필수</span>
-                            </div>
-                            <button class="remove-btn" onclick="removeCriteriaItem(this)">삭제</button>
-                        </div>
-                    </div>
-                `;
-
-    loadCategoriesForProject();
-  } catch (error) {
-    window.showMessage('심사항목 저장 중 오류가 발생했습니다.', 'error');
-  }
-};
-
-window.loadCriteria = async function () {
-  try {
-    const criteriaSnapshot = await getDocs(collection(db, 'criteria'));
-    const criteriaList = document.getElementById('criteriaList');
-    criteriaList.innerHTML = '';
-
-    window.appState.criteria = [];
-
-    criteriaSnapshot.forEach(doc => {
-      const criteria = { id: doc.id, ...doc.data() };
-      window.appState.criteria.push(criteria);
-
-      const criteriaCard = document.createElement('div');
-      criteriaCard.className = 'criteria-card';
-      criteriaCard.innerHTML = `
-                        <div class="criteria-header">
-                            <div class="criteria-title">${criteria.category}</div>
-                            <div class="criteria-category">총 ${criteria.totalScore}점</div>
-                        </div>
-                        <div class="criteria-description">${criteria.description}</div>
-                        <div class="criteria-items">
-                            ${criteria.items.map(item => `
-                                <div class="criteria-item">
-                                    <div class="criteria-item-header">
-                                        <span class="criteria-item-name">${item.name}</span>
-                                        <span class="criteria-item-score">
-                                            ${item.type === 'number' ? `${item.score}점` : '총평'}
-                                        </span>
-                                    </div>
-                                    ${item.required ? '<span class="criteria-item-required">필수</span>' : ''}
-                                </div>
-                            `).join('')}
-                        </div>
-                        <div class="action-buttons" style="margin-top: 15px;">
-                            <button class="edit-btn" onclick="editCriteria('${doc.id}')">수정</button>
-                            <button class="delete-btn" onclick="deleteCriteria('${doc.id}')">삭제</button>
-                        </div>
-                    `;
-      criteriaList.appendChild(criteriaCard);
-    });
-  } catch (error) {
-    // 오류 무시
-  }
-};
-
-window.editCriteria = async function (criteriaId) {
-  try {
-    const criteriaDoc = await getDoc(doc(db, 'criteria', criteriaId));
-    if (!criteriaDoc.exists()) {
-      window.showMessage('심사항목을 찾을 수 없습니다.', 'error');
-      return;
-    }
-
-    const criteria = criteriaDoc.data();
-    window.appState.editingCriteriaId = criteriaId;
-
-    document.getElementById('editCriteriaCategory').value = criteria.category;
-    document.getElementById('editCriteriaDescription').value = criteria.description;
-
-    const itemsContainer = document.getElementById('editCriteriaItems');
-    itemsContainer.innerHTML = '';
-
-    criteria.items.forEach(item => {
-      const itemDiv = document.createElement('div');
-      itemDiv.className = 'criteria-item-input';
-      itemDiv.innerHTML = `
-                        <div class="criteria-item-row">
-                            <input type="text" placeholder="항목명" class="item-name" value="${item.name}">
-                            <select class="item-type" onchange="toggleScoreInput(this)">
-                                <option value="number" ${item.type === 'number' ? 'selected' : ''}>숫자</option>
-                                <option value="text" ${item.type === 'text' ? 'selected' : ''}>총평</option>
-                            </select>
-                            <input type="number" placeholder="배점" class="item-score" min="0" value="${item.score}"
-                                   style="${item.type === 'text' ? 'display:none' : ''}">
-                            <div class="checkbox-label">
-                                <input type="checkbox" class="item-required" ${item.required ? 'checked' : ''}>
-                                <span>필수</span>
-                            </div>
-                            <button class="remove-btn" onclick="removeCriteriaItem(this)">삭제</button>
-                        </div>
-                    `;
-      itemsContainer.appendChild(itemDiv);
-    });
-
-    // 모달 표시
-    const modal = document.getElementById('criteriaEditModal');
-    modal.classList.add('active');
-
-    // 모달 콘텐츠가 중앙에 오도록 보장
-    modal.style.display = 'flex';
-    modal.style.justifyContent = 'center';
-    modal.style.alignItems = 'center';
-  } catch (error) {
-    window.showMessage('심사항목 정보를 불러오는 중 오류가 발생했습니다.', 'error');
-    console.error(error);
-  }
-};
-
-window.updateCriteria = async function () {
-  const category = document.getElementById('editCriteriaCategory').value;
-  const description = document.getElementById('editCriteriaDescription').value;
-
-  if (!category || !description) {
-    window.showMessage('카테고리와 심사기준을 입력하세요.', 'error');
-    return;
-  }
-
-  const items = [];
-  const itemElements = document.querySelectorAll('#editCriteriaItems .criteria-item-input');
-
-  let totalScore = 0;
-  for (const element of itemElements) {
-    const name = element.querySelector('.item-name').value;
-    const type = element.querySelector('.item-type').value;
-    const score = type === 'number' ? parseInt(element.querySelector('.item-score').value) || 0 : 0;
-    const required = element.querySelector('.item-required').checked;
-
-    if (!name) {
-      window.showMessage('모든 항목명을 입력하세요.', 'error');
-      return;
-    }
-
-    if (type === 'number' && score <= 0) {
-      window.showMessage('숫자 유형 항목은 배점을 입력해야 합니다.', 'error');
-      return;
-    }
-
-    totalScore += score;
-    items.push({ name, type, score, required });
-  }
-
-  if (items.length === 0) {
-    window.showMessage('최소 하나 이상의 심사항목을 추가하세요.', 'error');
-    return;
-  }
-
-  try {
-    await updateDoc(doc(db, 'criteria', window.appState.editingCriteriaId), {
-      category,
-      description,
-      items,
-      totalScore,
-      updatedAt: new Date()
-    });
-
-    window.showMessage('심사항목이 수정되었습니다.', 'success');
-    closeCriteriaModal();
-    loadCriteria();
-    loadCategoriesForProject();
-  } catch (error) {
-    window.showMessage('심사항목 수정 중 오류가 발생했습니다.', 'error');
-  }
-};
-
-window.deleteCriteria = async function (criteriaId) {
-  if (confirm('정말 이 심사항목을 삭제하시겠습니까?')) {
-    try {
-      await deleteDoc(doc(db, 'criteria', criteriaId));
-      window.showMessage('심사항목이 삭제되었습니다.', 'success');
-      loadCriteria();
-      loadCategoriesForProject();
-    } catch (error) {
-      window.showMessage('심사항목 삭제 중 오류가 발생했습니다.', 'error');
-    }
-  }
-};
-
-window.loadCategoriesForProject = async function () {
-  try {
-    const criteriaSnapshot = await getDocs(collection(db, 'criteria'));
-    const categorySelect = document.getElementById('projectCategory');
-    categorySelect.innerHTML = '<option value="">선택하세요</option>';
-
-    criteriaSnapshot.forEach(doc => {
-      const criteria = doc.data();
-      const option = document.createElement('option');
-      option.value = doc.id;
-      option.textContent = `${criteria.category} (${criteria.totalScore}점)`;
-      categorySelect.appendChild(option);
-    });
-  } catch (error) {
-    // 오류 무시
-  }
-};
-
-window.registerProject = async function () {
-  const teamName = document.getElementById('teamName').value;
-  const title = document.getElementById('projectTitle').value;
-  const participants = document.getElementById('projectParticipants').value;
-  const categoryId = document.getElementById('projectCategory').value;
-
-  if (!teamName || !title || !participants || !categoryId) {
-    window.showMessage('모든 필드를 입력하세요.', 'error');
-    return;
-  }
-
-  try {
-    // 선택한 카테고리 정보 가져오기
-    const criteriaDoc = await getDoc(doc(db, 'criteria', categoryId));
-    const criteriaData = criteriaDoc.data();
-
-    await addDoc(collection(db, 'projects'), {
-      teamName: teamName,
-      title: title,
-      participants: participants.split(',').map(p => p.trim()),
-      criteriaId: categoryId,
-      criteriaCategory: criteriaData.category,
-      createdBy: window.appState.currentUser.userId,
-      createdAt: new Date()
-    });
-
-    window.showMessage('과제가 등록되었습니다!', 'success');
-
-    document.getElementById('teamName').value = '';
-    document.getElementById('projectTitle').value = '';
-    document.getElementById('projectParticipants').value = '';
-    document.getElementById('projectCategory').value = '';
-
-    loadAdminProjects();
-  } catch (error) {
-    window.showMessage('과제 등록 중 오류가 발생했습니다.', 'error');
-  }
-};
-
-window.switchTab = function (tabName) {
-  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-
-  // 상세보기 숨기기
-  document.getElementById('projectDetailView').style.display = 'none';
-
-  // 과제 목록 탭 다시 표시 (버그 수정)
-  document.getElementById('projectListTab').style.display = '';
-
-  event.target.classList.add('active');
-  document.getElementById(tabName + 'Tab').classList.add('active');
-
-  if (tabName === 'projectList') {
-    loadAdminProjects();
-  } else if (tabName === 'judges') {
-    loadJudgesList();
-  } else if (tabName === 'criteriaManage') {
-    loadCriteria();
-  } else if (tabName === 'projectRegister') {
-    loadCategoriesForProject();
-  }
-};
-
-window.loadAdminData = async function () {
-  try {
-    const usersSnapshot = await getDocs(collection(db, 'users'));
-    const users = [];
-    usersSnapshot.forEach(doc => {
-      users.push({ id: doc.id, ...doc.data() });
-    });
-    window.appState.users = users;
-
-    loadAdminProjects();
-    loadCategoriesForProject();
-  } catch (error) {
-    // 오류 무시
-  }
-};
-
-window.loadAdminProjects = async function () {
-  try {
-    const projectsSnapshot = await getDocs(collection(db, 'projects'));
-    const projectsList = document.getElementById('adminProjectList');
-    projectsList.innerHTML = '';
-
-    const projects = [];
-
-    // 모든 프로젝트 데이터와 점수 가져오기
-    for (const projectDoc of projectsSnapshot.docs) {
-      const project = { id: projectDoc.id, ...projectDoc.data() };
-
-      const scoresSnapshot = await getDocs(query(collection(db, 'scores'), where("projectId", "==", project.id)));
-      const scores = [];
-      scoresSnapshot.forEach(scoreDoc => {
-        scores.push(scoreDoc.data());
-      });
-
-      project.scores = scores;
-      project.avgScore = scores.length > 0
-        ? scores.reduce((sum, s) => sum + s.totalScore, 0) / scores.length
-        : 0;
-
-      projects.push(project);
-    }
-
-    // 평균 점수로 정렬 (높은 점수부터)
-    projects.sort((a, b) => b.avgScore - a.avgScore);
-
-    // 부문별로 프로젝트 분류하고 정렬
-    const categoryGroups = {};
-    projects.forEach(p => {
-      const category = p.criteriaCategory || '기타';
-      if (!categoryGroups[category]) {
-        categoryGroups[category] = [];
-      }
-      categoryGroups[category].push(p);
-    });
-
-    // 각 카테고리별로 정렬
-    Object.keys(categoryGroups).forEach(category => {
-      categoryGroups[category].sort((a, b) => b.avgScore - a.avgScore);
-    });
-
-    // 정렬된 프로젝트 목록 생성
-    const sortedProjects = [];
-    const rankedProjects = new Set(); // 1,2등 프로젝트 ID 저장
-
-    // 먼저 각 부문별 1,2등 추가
-    Object.keys(categoryGroups).forEach(category => {
-      const categoryProjects = categoryGroups[category];
-      if (categoryProjects.length > 0 && categoryProjects[0].avgScore > 0) {
-        sortedProjects.push(categoryProjects[0]); // 1등
-        rankedProjects.add(categoryProjects[0].id);
-      }
-      if (categoryProjects.length > 1 && categoryProjects[1].avgScore > 0) {
-        sortedProjects.push(categoryProjects[1]); // 2등
-        rankedProjects.add(categoryProjects[1].id);
-      }
-    });
-
-    // 나머지 프로젝트를 조 이름으로 정렬하여 추가
-    const unrankedProjects = projects.filter(p => !rankedProjects.has(p.id));
-    unrankedProjects.sort((a, b) => {
-      const teamA = a.teamName || '';
-      const teamB = b.teamName || '';
-
-      // 숫자 추출을 위한 정규식
-      const numA = parseInt(teamA.match(/\d+/) || '999');
-      const numB = parseInt(teamB.match(/\d+/) || '999');
-
-      // 숫자가 있으면 숫자로 비교, 없으면 문자열로 비교
-      if (!isNaN(numA) && !isNaN(numB)) {
-        return numA - numB;
-      }
-      return teamA.localeCompare(teamB, 'ko');
-    });
-
-    // 정렬된 순서대로 최종 목록 생성
-    const finalProjectList = [...sortedProjects, ...unrankedProjects];
-
-    // 프로젝트 카드 생성
-    finalProjectList.forEach((project) => {
-      const category = project.criteriaCategory || '기타';
-      const categoryProjects = categoryGroups[category];
-      const index = categoryProjects.findIndex(p => p.id === project.id);
-
-      let rankLabel = '';
-      let rankStyle = '';
-      if (index === 0 && project.avgScore > 0) {
-        rankLabel = `${category} 1등`;
-        rankStyle = 'background: linear-gradient(135deg, #FFD700, #FFA500);';
-      } else if (index === 1 && project.avgScore > 0) {
-        rankLabel = `${category} 2등`;
-        rankStyle = 'background: linear-gradient(135deg, #C0C0C0, #A8A8A8);';
-      }
-
-      const categoryClass = project.criteriaCategory ?
-        (project.criteriaCategory.includes('자유') ? 'category-free' :
-          project.criteriaCategory.includes('과제') ? 'category-challenge' : 'category-etc') :
-        'category-etc';
-
-      const projectCard = document.createElement('div');
-      projectCard.className = 'card project-item';
-      projectCard.innerHTML = `
-                        ${rankLabel ? `<div class="project-rank" style="${rankStyle}">${rankLabel}</div>` : ''}
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <div style="margin-bottom: 8px;">
-                                    ${project.teamName ? `<span class="team-badge">${project.teamName}</span>` : ''}
-                                    <span class="project-title">${project.title}</span>
-                                </div>
-                            </div>
-                            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
-                                <div class="total-score" style="text-align: right;">평균: ${project.avgScore.toFixed(1)}점</div>
-                                <div class="action-buttons">
-                                    <button class="edit-btn" onclick="editProject('${project.id}')">수정</button>
-                                    <button class="delete-btn" onclick="deleteProject('${project.id}')">삭제</button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-      projectCard.onclick = (e) => {
-        if (!e.target.classList.contains('delete-btn') && !e.target.classList.contains('edit-btn')) {
-          showProjectDetail(project.id);
-        }
-      };
-      projectsList.appendChild(projectCard);
-    });
-
-    // 전역 상태에 저장
-    window.appState.projects = projects;
-  } catch (error) {
-    // 오류 무시
-  }
-};
-
-window.showProjectDetail = async function (projectId) {
-  try {
-    const project = window.appState.projects.find(p => p.id === projectId);
-    if (!project) return;
-
-    // 심사 기준 정보 가져오기
-    let criteriaData = null;
-    if (project.criteriaId) {
-      const criteriaDoc = await getDoc(doc(db, 'criteria', project.criteriaId));
-      if (criteriaDoc.exists()) {
-        criteriaData = criteriaDoc.data();
-      }
-    }
-
-    // 점수 상세 정보 가져오기
-    const scoresSnapshot = await getDocs(query(collection(db, 'scores'), where("projectId", "==", projectId)));
-    const scores = [];
-    scoresSnapshot.forEach(scoreDoc => {
-      scores.push(scoreDoc.data());
-    });
-
-    // 항목별 평균 계산
-    let itemAverages = {};
-    if (criteriaData && scores.length > 0) {
-      criteriaData.items.forEach(item => {
-        if (item.type === 'number') {
-          const itemScores = scores.map(s => s.itemScores?.[item.name] || 0);
-          itemAverages[item.name] = itemScores.reduce((sum, score) => sum + score, 0) / itemScores.length;
-        }
-      });
-    }
-
-    const avgTotal = scores.length > 0
-      ? scores.reduce((sum, s) => sum + s.totalScore, 0) / scores.length : 0;
-
-    // 상세 화면 HTML 생성
-    const detailContent = document.getElementById('projectDetailContent');
-    detailContent.innerHTML = `
-                    <div class="score-detail-section">
-                        <h2 style="color: #ffffff;">
-                            ${project.teamName ? `<span class="team-badge">${project.teamName}</span>` : ''}
-                            ${project.title}
-                        </h2>
-
-                        <h3 style="margin-top: 20px;">참가자 정보</h3>
-                        <div class="participant-list" style="margin-bottom: 30px;">
-                            ${project.participants && project.participants.length > 0 ?
-      project.participants.map(participant =>
-        `<span class="participant-tag">${participant}</span>`
-      ).join('')
-      : '<p style="color: #FF69B4;">참가자 정보가 없습니다.</p>'}
-                        </div>
-
-                        ${criteriaData ? `
-                            <h3 style="margin-top: 30px;">평가 항목별 평균 점수</h3>
-                            <div class="score-summary">
-                                ${criteriaData.items.filter(item => item.type === 'number').map(item => `
-                                    <div class="score-summary-item">
-                                        <div class="score-summary-label">${item.name} <span style="color: #32CD32;">${item.score}%</span></div>
-                                        <div class="score-summary-value">${(itemAverages[item.name] || 0).toFixed(1)}</div>
-                                    </div>
-                                `).join('')}
-                                <div class="score-summary-item">
-                                    <div class="score-summary-label">총점</div>
-                                    <div class="score-summary-value">${avgTotal.toFixed(1)}</div>
-                                </div>
-                            </div>
-                        ` : ''}
-
-                        <h3 style="margin-top: 30px;">심사위원별 평가 내역</h3>
-                        <div class="judge-scores">
-                            ${scores.length > 0 ? scores.map(score => `
-                                <div class="judge-score-card">
-                                    <div class="judge-name">${score.judgeName}</div>
-                                    <div class="judge-score-details">
-                                        ${criteriaData ? criteriaData.items.filter(item => item.type === 'number').map(item => `
-                                            <div class="judge-score-item">
-                                                <div class="judge-score-label">${item.name}</div>
-                                                <div class="judge-score-value">${score.itemScores?.[item.name] || 0}</div>
-                                            </div>
-                                        `).join('') : ''}
-                                        <div class="judge-score-item">
-                                            <div class="judge-score-label">총점</div>
-                                            <div class="judge-score-value"><strong>${score.totalScore}</strong></div>
-                                        </div>
-                                    </div>
-                                    ${score.review ? `<div class="judge-review">"${score.review}"</div>` : ''}
-                                </div>
-                            `).join('') : '<p style="text-align: center; color: #FF69B4;">아직 평가 내역이 없습니다.</p>'}
-                        </div>
-                    </div>
-                `;
-
-    // 목록 숨기고 상세보기 표시
-    document.getElementById('projectListTab').style.display = 'none';
-    document.getElementById('projectDetailView').style.display = 'block';
-  } catch (error) {
-    window.showMessage('상세 정보를 불러오는 중 오류가 발생했습니다.', 'error');
-  }
-};
-
-window.backToProjectList = function () {
-  document.getElementById('projectDetailView').style.display = 'none';
-  document.getElementById('projectListTab').style.display = 'block';
-};
-
-window.exportToCSV = async function () {
-  try {
-    // 모든 데이터 수집
-    const projectsSnapshot = await getDocs(collection(db, 'projects'));
-    const scoresSnapshot = await getDocs(collection(db, 'scores'));
-    const criteriaSnapshot = await getDocs(collection(db, 'criteria'));
-
-    const projects = {};
-    const criteria = {};
-
-    projectsSnapshot.forEach(doc => {
-      projects[doc.id] = { id: doc.id, ...doc.data() };
-    });
-
-    criteriaSnapshot.forEach(doc => {
-      criteria[doc.id] = doc.data();
-    });
-
-    const scores = [];
-    scoresSnapshot.forEach(doc => {
-      const score = doc.data();
-      const project = projects[score.projectId];
-      if (project) {
-        const projectCriteria = project.criteriaId ? criteria[project.criteriaId] : null;
-
-        let row = {
-          '과제명': project.title,
-          '참가자': project.participants.join(', '),
-          '참가부문': project.criteriaCategory || '기타',
-          '심사위원': score.judgeName
-        };
-
-        // 동적으로 점수 항목 추가
-        if (projectCriteria && score.itemScores) {
-          projectCriteria.items.forEach(item => {
-            if (item.type === 'number') {
-              row[item.name] = score.itemScores[item.name] || 0;
-            }
-          });
-        }
-
-        row['총점'] = score.totalScore;
-        row['총평'] = score.review || '';
-
-        scores.push(row);
-      }
-    });
-
-    if (scores.length === 0) {
-      window.showMessage('내보낼 채점 내역이 없습니다.', 'info');
-      return;
-    }
-
-    // CSV 생성
-    const headers = Object.keys(scores[0]);
-    const csvContent = [
-      headers.join(','),
-      ...scores.map(row =>
-        headers.map(header => {
-          const value = row[header];
-          // 쉼표나 줄바꿈이 있는 경우 따옴표로 감싸기
-          return typeof value === 'string' && (value.includes(',') || value.includes('\n'))
-            ? `"${value.replace(/"/g, '""')}"`
-            : value;
-        }).join(',')
-      )
-    ].join('\n');
-
-    // BOM 추가 (한글 깨짐 방지)
-    const BOM = '\uFEFF';
-    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-
-    const now = new Date();
-    const fileName = `내역_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}.csv`;
-
-    link.setAttribute('href', url);
-    link.setAttribute('download', fileName);
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    window.showMessage('CSV 파일이 다운로드되었습니다.', 'success');
-  } catch (error) {
-    window.showMessage('CSV 내보내기 중 오류가 발생했습니다.', 'error');
-  }
-};
-
-window.editProject = async function (projectId) {
-  try {
-    // 프로젝트 정보 가져오기
-    const projectDoc = await getDoc(doc(db, 'projects', projectId));
-    if (!projectDoc.exists()) {
-      window.showMessage('과제를 찾을 수 없습니다.', 'error');
-      return;
-    }
-
-    const project = projectDoc.data();
-    window.appState.editingProjectId = projectId;
-
-    // 카테고리 목록 먼저 로드
-    await loadCategoriesForEditProject();
-
-    // 폼에 값 설정
-    document.getElementById('editTeamName').value = project.teamName || '';
-    document.getElementById('editProjectTitle').value = project.title || '';
-    document.getElementById('editProjectParticipants').value = project.participants ? project.participants.join(', ') : '';
-    document.getElementById('editProjectCategory').value = project.criteriaId || '';
-
-    // 모달 열기
-    document.getElementById('projectEditModal').classList.add('active');
-  } catch (error) {
-    window.showMessage('과제 정보를 불러오는 중 오류가 발생했습니다.', 'error');
-  }
-};
-
-window.loadCategoriesForEditProject = async function () {
-  try {
-    const criteriaSnapshot = await getDocs(collection(db, 'criteria'));
-    const categorySelect = document.getElementById('editProjectCategory');
-    categorySelect.innerHTML = '<option value="">선택하세요</option>';
-
-    criteriaSnapshot.forEach(doc => {
-      const criteria = doc.data();
-      const option = document.createElement('option');
-      option.value = doc.id;
-      option.textContent = `${criteria.category} (${criteria.totalScore}점)`;
-      categorySelect.appendChild(option);
-    });
-  } catch (error) {
-    // 오류 무시
-  }
-};
-
-window.updateProject = async function () {
-  const teamName = document.getElementById('editTeamName').value;
-  const title = document.getElementById('editProjectTitle').value;
-  const participants = document.getElementById('editProjectParticipants').value;
-  const categoryId = document.getElementById('editProjectCategory').value;
-
-  if (!teamName || !title || !participants || !categoryId) {
-    window.showMessage('모든 필드를 입력하세요.', 'error');
-    return;
-  }
-
-  try {
-    // 선택한 카테고리 정보 가져오기
-    const criteriaDoc = await getDoc(doc(db, 'criteria', categoryId));
-    const criteriaData = criteriaDoc.data();
-
-    await updateDoc(doc(db, 'projects', window.appState.editingProjectId), {
-      teamName: teamName,
-      title: title,
-      participants: participants.split(',').map(p => p.trim()),
-      criteriaId: categoryId,
-      criteriaCategory: criteriaData.category,
-      updatedAt: new Date()
-    });
-
-    window.showMessage('과제가 수정되었습니다.', 'success');
-    closeProjectModal();
-    loadAdminProjects();
-  } catch (error) {
-    window.showMessage('과제 수정 중 오류가 발생했습니다.', 'error');
-  }
-};
-
-window.closeProjectModal = function () {
-  document.getElementById('projectEditModal').classList.remove('active');
-  window.appState.editingProjectId = null;
-};
-
-window.deleteProject = async function (projectId) {
-  if (confirm('정말 이 과제를 삭제하시겠습니까?')) {
-    try {
-      await deleteDoc(doc(db, 'projects', projectId));
-      window.showMessage('과제가 삭제되었습니다.', 'success');
-      loadAdminProjects();
-    } catch (error) {
-      window.showMessage('과제 삭제 중 오류가 발생했습니다.', 'error');
-    }
-  }
-};
-
-window.resetScores = async function () {
-  const confirmMessage = `정말 모든 채점 내역을 삭제하시겠습니까?\n\n⚠️ 이 작업은 되돌릴 수 없습니다.\n- 모든 심사위원의 채점 내역이 삭제됩니다.\n- 과제는 유지되지만 점수는 모두 초기화됩니다.`;
-
-  if (!confirm(confirmMessage)) {
-    return;
-  }
-
-  // 두 번 확인
-  if (!confirm('다시 한 번 확인합니다.\n정말로 모든 채점 내역을 초기화하시겠습니까?')) {
-    return;
-  }
-
-  try {
-    // 모든 채점 내역 삭제
-    const scoresSnapshot = await getDocs(collection(db, 'scores'));
-    const deletePromises = [];
-    scoresSnapshot.forEach(doc => {
-      deletePromises.push(deleteDoc(doc.ref));
-    });
-
-    await Promise.all(deletePromises);
-
-    window.showMessage(`${deletePromises.length}개의 채점 내역이 초기화되었습니다.`, 'success');
-    loadAdminProjects();
-  } catch (error) {
-    window.showMessage('채점 내역 초기화 중 오류가 발생했습니다.', 'error');
-  }
-};
-
-window.resetProjects = async function () {
-  const confirmMessage = `정말 모든 과제와 채점 내역을 삭제하시겠습니까?\n\n⚠️ 이 작업은 되돌릴 수 없습니다.\n- 모든 과제가 삭제됩니다.\n- 모든 채점 내역이 삭제됩니다.`;
-
-  if (!confirm(confirmMessage)) {
-    return;
-  }
-
-  // 두 번 확인
-  if (!confirm('다시 한 번 확인합니다.\n정말로 모든 과제를 초기화하시겠습니까?')) {
-    return;
-  }
-
-  try {
-    // 모든 과제 삭제
-    const projectsSnapshot = await getDocs(collection(db, 'projects'));
-    const deleteProjectPromises = [];
-    projectsSnapshot.forEach(doc => {
-      deleteProjectPromises.push(deleteDoc(doc.ref));
-    });
-
-    // 모든 채점 내역 삭제
-    const scoresSnapshot = await getDocs(collection(db, 'scores'));
-    const deleteScorePromises = [];
-    scoresSnapshot.forEach(doc => {
-      deleteScorePromises.push(deleteDoc(doc.ref));
-    });
-
-    // 모든 삭제 작업 실행
-    await Promise.all([...deleteProjectPromises, ...deleteScorePromises]);
-
-    window.showMessage('모든 과제와 채점 내역이 초기화되었습니다.', 'success');
-    loadAdminProjects();
-  } catch (error) {
-    window.showMessage('과제 초기화 중 오류가 발생했습니다.', 'error');
-  }
-};
-
-window.resetJudges = async function () {
-  const confirmMessage = `정말 모든 심사위원을 삭제하시겠습니까?\n\n⚠️ 이 작업은 되돌릴 수 없습니다.\n- 모든 심사위원 계정이 삭제됩니다.\n- 관리자 계정은 유지됩니다.`;
-
-  if (!confirm(confirmMessage)) {
-    return;
-  }
-
-  // 두 번 확인
-  if (!confirm('다시 한 번 확인합니다.\n정말로 모든 심사위원을 초기화하시겠습니까?')) {
-    return;
-  }
-
-  try {
-    // 심사위원만 삭제 (관리자는 유지)
-    const judgesQuery = query(collection(db, 'users'), where("role", "==", "judge"));
-    const judgesSnapshot = await getDocs(judgesQuery);
-
-    const deletePromises = [];
-    judgesSnapshot.forEach(doc => {
-      deletePromises.push(deleteDoc(doc.ref));
-    });
-
-    await Promise.all(deletePromises);
-
-    window.showMessage(`${deletePromises.length}명의 심사위원이 삭제되었습니다.`, 'success');
-    loadJudgesList();
-  } catch (error) {
-    window.showMessage('심사위원 초기화 중 오류가 발생했습니다.', 'error');
-  }
-};
-
-window.loadJudgesList = async function () {
-  try {
-    const judgesQuery = query(collection(db, 'users'), where("role", "==", "judge"));
-    const judgesSnapshot = await getDocs(judgesQuery);
-    const judgesList = document.getElementById('judgesList');
-    judgesList.innerHTML = '';
-
-    // judgesSnapshot을 배열로 변환 후 정렬
-    const sortedJudges = judgesSnapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() }))
-      .sort((a, b) => a.name.localeCompare(b.name)); // 이름 기준 오름차순 정렬
-
-    // 정렬된 배열을 이용해 DOM에 추가
-    sortedJudges.forEach(judge => {
-      const userCard = document.createElement('div');
-      userCard.className = 'user-card';
-      userCard.innerHTML = `
-            <div class="user-info">
-                <div class="user-name">${judge.name}</div>
-                <div class="user-credentials">
-                    아이디: ${judge.userId} | 비밀번호: ${judge.password}
-                </div>
-            </div>
-            <div class="action-buttons">
-                <button class="edit-btn" onclick="editUser('${judge.id}')">수정</button>
-                <button class="delete-btn" onclick="deleteUser('${judge.id}')">삭제</button>
-            </div>
-        `;
-      judgesList.appendChild(userCard);
-    });
-  } catch (error) {
-    // 오류 무시
-  }
-};
-
-window.editUser = async function (userId) {
-  try {
-    const usersSnapshot = await getDocs(collection(db, 'users'));
-    let userData = null;
-
-    usersSnapshot.forEach(doc => {
-      if (doc.id === userId) {
-        userData = doc.data();
-      }
-    });
-
-    if (userData) {
-      window.appState.editingUserId = userId;
-      document.getElementById('editName').value = userData.name;
-      document.getElementById('editUserId').value = userData.userId;
-      document.getElementById('editPassword').value = userData.password;
-      document.getElementById('editModal').classList.add('active');
-    }
-  } catch (error) {
-    window.showMessage('사용자 정보를 불러오는 중 오류가 발생했습니다.', 'error');
-  }
-};
-
-window.updateUser = async function () {
-  const name = document.getElementById('editName').value;
-  const userId = document.getElementById('editUserId').value;
-  const password = document.getElementById('editPassword').value;
-
-  if (!name || !userId || !password) {
-    window.showMessage('모든 필드를 입력하세요.', 'error');
-    return;
-  }
-
-  try {
-    await updateDoc(doc(db, 'users', window.appState.editingUserId), {
-      name: name,
-      userId: userId,
-      password: password
-    });
-
-    window.showMessage('심사위원 정보가 수정되었습니다.', 'success');
-    closeModal();
-    loadJudgesList();
-  } catch (error) {
-    window.showMessage('심사위원 정보 수정 중 오류가 발생했습니다.', 'error');
-  }
-};
-
-window.deleteUser = async function (userId) {
-  if (confirm('정말 이 심사위원을 삭제하시겠습니까?')) {
-    try {
-      await deleteDoc(doc(db, 'users', userId));
-      window.showMessage('심사위원이 삭제되었습니다.', 'success');
-      loadJudgesList();
-    } catch (error) {
-      window.showMessage('심사위원 삭제 중 오류가 발생했습니다.', 'error');
-    }
-  }
-};
-
-window.closeModal = function () {
-  document.getElementById('editModal').classList.remove('active');
-  window.appState.editingUserId = null;
-};
-
-// loadJudgeProjects 함수 - 점수 표시 수정
-window.loadJudgeProjects = async function () {
-  try {
-    const projectsSnapshot = await getDocs(collection(db, 'projects'));
-    const projectsList = document.getElementById('judgeProjectList');
-    projectsList.innerHTML = '';
-
-    // 현재 심사위원이 채점한 과제 목록과 점수 가져오기
-    const scoresQuery = query(collection(db, 'scores'), where("judgeId", "==", window.appState.currentUser.userId));
-    const scoresSnapshot = await getDocs(scoresQuery);
-    const scoresByProjectId = {};
-
-    scoresSnapshot.forEach(doc => {
-      const scoreData = doc.data();
-      scoresByProjectId[scoreData.projectId] = scoreData;
-    });
-
-    // 심사위원 정보
-    const judgesQuery = query(collection(db, 'users'), where("userId", "==", window.appState.currentUser.userId));
-    const judgesSnapshot = await getDocs(judgesQuery);
-    const sortedJudges = judgesSnapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-
-    let userData = null;
-    sortedJudges.forEach(judge => {
-      userData = judge;
-    });
-
-    // 프로젝트 데이터를 배열로 수집
-    const projects = [];
-    for (const doc of projectsSnapshot.docs) {
-      const project = doc.data();
-      if (userData['name'].indexOf(project['teamName']) == 1) {
-        continue;
-      }
-
-      const isScored = scoresByProjectId.hasOwnProperty(doc.id);
-      const scoreData = scoresByProjectId[doc.id];
-
-      // 심사 기준 정보 가져오기 (총점 표시를 위해)
-      let maxScore = 100; // 기본값
-      if (project.criteriaId) {
-        try {
-          const criteriaDoc = await getDoc(doc(db, 'criteria', project.criteriaId));
-          if (criteriaDoc.exists()) {
-            maxScore = criteriaDoc.data().totalScore;
-          }
-        } catch (error) {
-          // 오류 무시
-        }
-      }
-
-      projects.push({
-        id: doc.id,
-        data: project,
-        isScored: isScored,
-        score: scoreData ? scoreData.totalScore : null,
-        maxScore: maxScore
-      });
-    }
-
-    // 조 이름으로 정렬 (오름차순)
-    // 숫자가 포함된 조 이름도 자연스럽게 정렬되도록 처리
-    projects.sort((a, b) => {
-      const teamA = a.data.teamName || '';
-      const teamB = b.data.teamName || '';
-
-      // 숫자 추출을 위한 정규식
-      const numA = parseInt(teamA.match(/\d+/) || '999');
-      const numB = parseInt(teamB.match(/\d+/) || '999');
-
-      // 숫자가 있으면 숫자로 비교, 없으면 문자열로 비교
-      if (!isNaN(numA) && !isNaN(numB)) {
-        return numA - numB;
-      }
-      return teamA.localeCompare(teamB, 'ko');
-    });
-
-    // 정렬된 순서로 프로젝트 카드 생성
-    projects.forEach(({ id, data: project, isScored, score, maxScore }) => {
-      const categoryClass = project.criteriaCategory ?
-        (project.criteriaCategory.includes('자유') ? 'category-free' :
-          project.criteriaCategory.includes('과제') ? 'category-challenge' : 'category-etc') :
-        'category-etc';
-
-      const projectCard = document.createElement('div');
-      projectCard.className = `card project-item ${isScored ? 'completed' : ''}`;
-      projectCard.innerHTML = `
-                        <div class="project-info">
-                            <div style="flex: 1;">
-                                <div style="margin-bottom: 8px;">
-                                    ${project.teamName ? `<span class="team-badge">${project.teamName}</span>` : ''}
-                                    <span class="project-title">${project.title}</span>
-                                    ${isScored ? '<span class="completed-check">✓</span>' : ''}
-                                </div>
-                                <div class="project-meta" style="margin-top: 10px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;">
-                                    ${isScored ? `
-                                        <span class="judge-score-badge">${score}</span>
-                                    ` : ''}
-                                </div>
-                            </div>
-                        </div>
-                    `;
-      projectCard.onclick = () => showScoringForm(id, project, projectCard);
-      projectsList.appendChild(projectCard);
-    });
-  } catch (error) {
-    // 오류 무시
-  }
-};
-
-window.showScoringForm = async function (projectId, project, element) {
-  // 기존 채점 폼이 있으면 제거
-  const existingForm = document.getElementById('scoringForm');
-
-  // 같은 과제를 다시 클릭한 경우 폼을 닫기만 함
-  if (existingForm && existingForm.dataset.projectId === projectId) {
-    existingForm.remove();
-    return;
-  }
-
-  // 다른 과제의 폼이 열려있으면 제거
-  if (existingForm) existingForm.remove();
-
-  // 심사 기준 정보 가져오기
-  let criteriaData = null;
-  if (project.criteriaId) {
-    try {
-      const criteriaDoc = await getDoc(doc(db, 'criteria', project.criteriaId));
-      if (criteriaDoc.exists()) {
-        criteriaData = criteriaDoc.data();
-      }
-    } catch (error) {
-      window.showMessage('심사기준을 불러오는 중 오류가 발생했습니다.', 'error');
-      return;
-    }
-  }
-
-  if (!criteriaData) {
-    window.showMessage('이 과제의 심사기준이 설정되지 않았습니다.', 'error');
-    return;
-  }
-
-  // 기존 점수 확인
-  let existingScore = null;
-  try {
-    const scoresQuery = query(collection(db, 'scores'),
-      where("projectId", "==", projectId),
-      where("judgeId", "==", window.appState.currentUser.userId)
-    );
-    const scoresSnapshot = await getDocs(scoresQuery);
-
-    if (!scoresSnapshot.empty) {
-      existingScore = {
-        id: scoresSnapshot.docs[0].id,
-        ...scoresSnapshot.docs[0].data()
-      };
-    }
-  } catch (error) {
-    // 오류 무시
-  }
-
-  const scoringForm = document.createElement('div');
-  scoringForm.id = 'scoringForm';
-  scoringForm.className = 'scoring-section';
-  scoringForm.dataset.projectId = projectId; // 프로젝트 ID 저장
-
-  let existingScoreHtml = '';
-  if (existingScore) {
-    existingScoreHtml = `
-                    <div class="existing-score">
-                        <h4>기존 채점 내역</h4>
-                        ${criteriaData.items.filter(item => item.type === 'number').map(item => `
-                            <div class="score-detail">
-                                <div style="color: #ffffff;">${item.name} <span style="color: #32CD32;">${item.score}%</span></div>
-                                <span style="color: #ffffff;">${existingScore.itemScores?.[item.name] || 0}점</span>
-                            </div>
-                        `).join('')}
-                        <hr style="margin: 10px 0;"/>
-                        <div class="score-detail">
-                            <span style="color: #ffffff;">총점</span>
-                            <span><strong style="color: #FF69B4;">${existingScore.totalScore}점</strong></span>
-                        </div>
-                        ${existingScore.review ? `
-                            <div class="score-detail">
-                                <span style="color: #ffffff;">총평:</span>
-                                <span style="color: #ffffff;">${existingScore.review}</span>
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-  }
-
-  scoringForm.innerHTML = `
-                <h3 style="color: #ffffff;">채점하기: ${project.teamName ? project.teamName + ' - ' : ''}${project.title}</h3>
-                <div style="margin: 10px 0; color: #FF69B4; font-size: 0.9rem;">
-                    💡 팁: 과제를 다시 클릭하면 채점 창이 닫힙니다.
-                </div>
-
-                ${existingScoreHtml}
-
-                <h4 style="margin-top: 40px; color: #ffffff;">심사기준 - <strong style="color: #32CD32;">${criteriaData.description}</strong></h4>
-
-                ${criteriaData.items.map(item => {
-    if (item.type === 'number') {
-      return `
-                            <div class="score-input">
-                                <label style="color: #ffffff;">
-                                    ${item.name}
-                                    <span style="color: #32CD32;">${item.score}%</span>
-                                    ${item.required ? '<span style="color: #FF69B4; font-size: 0.9rem;">(필수)</span>' : ''}
-                                </label>
-                                <select
-                                    id="score_${item.name}"
-                                    data-max="${item.score}"
-                                    data-name="${item.name}"
-                                    data-required="${item.required}"
-                                    onchange="validateItemScore(this); calculateTotal();">
-
-                                    <option value="">선택하세요</option>
-
-                                    ${[...Array(10)].map((_, i) => {
-        const v = i + 1;
-        const selected = (existingScore?.itemScores?.[item.name] == v) ? 'selected' : '';
-        return `<option value="${v}" ${selected}>${v}</option>`;
-      }).join('')}
-                                </select>
-                            </div>
-                        `;
-    } else {
-      return `
-                            <div class="form-group">
-                                <label style="color: #ffffff;">${item.name} ${item.required ? '<span style="color: #32CD32;">(필수)</span>' : ''}</label>
-                                <textarea id="text_${item.name}"
-                                          rows="4"
-                                          placeholder="${item.name}을(를) 입력하세요"
-                                          data-name="${item.name}"
-                                          data-required="${item.required}">${existingScore?.textItems?.[item.name] || ''}</textarea>
-                            </div>
-                        `;
-    }
-  }).join('')}
-
-                <div class="total-score" id="totalScore">총점: 0점</div>
-
-                <button onclick="submitDynamicScore('${projectId}', '${criteriaData.totalScore}')">${existingScore ? '점수 수정' : '채점 제출'}</button>
-            `;
-
-  // 클릭한 과제 카드 바로 아래에 채점 폼 삽입
-  element.parentNode.insertBefore(scoringForm, element.nextSibling);
-
-  // 초기 총점 계산
-  calculateTotal();
-
-  // 스크롤 이동
-  scoringForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-};
-
-window.validateItemScore = function (input) {
-  const value = parseFloat(input.value);
-  const maxScore = parseFloat(input.dataset.max);
-  const itemName = input.dataset.name;
-
-  if (value < 0) {
-    window.showMessage(`${itemName} 점수는 0점 이상이어야 합니다.`, 'error');
-    input.value = 0;
-  } else if (value > maxScore) {
-    window.showMessage(`${itemName} 점수는 ${maxScore}점을 초과할 수 없습니다.`, 'error');
-    input.value = maxScore;
-  }
-};
-
-window.calculateTotal = function () {
-  let total = 0;
-  const scoreInputs = document.querySelectorAll('#scoringForm select');
-
-  scoreInputs.forEach(input => {
-    const value = parseFloat(input.value) || 0;
-    const maxScore = parseFloat(input.dataset.max);
-    total += parseFloat(value * maxScore / 100) || 0;
-  });
-  total = Math.round(total * 10 ) / 10;
-
-  const totalElement = document.getElementById('totalScore');
-  if (totalElement) {
-    const maxScore = totalElement.textContent.split('/')[1]?.trim().replace('점', '') || '100';
-    totalElement.textContent = `총점: ${total}점`;
-  }
-};
-
-window.submitDynamicScore = async function (projectId, maxTotalScore) {
-  const itemScores = {};
-  const textItems = {};
-  let totalScore = 0;
-
-  // 숫자 항목 수집 및 검증
-  const scoreInputs = document.querySelectorAll('#scoringForm select');
-  for (const input of scoreInputs) {
-    const value = parseFloat(input.value) || 0;
-    const maxScore = parseFloat(input.dataset.max);
-    const itemName = input.dataset.name;
-    const required = input.dataset.required === 'true';
-
-    const num = Number(value);
-
-    // required여도 0은 허용. 비어있거나 숫자가 아니면 에러
-    if (required && (value === '' || value === null || value === undefined || Number.isNaN(num))) {
-      window.showMessage(`필수 항목 "${itemName}"을(를) 채점해주세요.`, 'error');
-      return;
-    }
-
-    if (num < 0 || num > maxScore) {
-      window.showMessage(`${itemName} 점수는 0-${maxScore}점 사이여야 합니다.`, 'error');
-      return;
-    }
-
-    itemScores[itemName] = value;
-    totalScore += parseFloat(value * maxScore / 100) || 0;
-  }
-  totalScore = Math.round(totalScore * 10 ) / 10;
-
-  // 텍스트 항목 수집 및 검증
-  const textInputs = document.querySelectorAll('#scoringForm textarea');
-  for (const input of textInputs) {
-    const value = input.value.trim();
-    const itemName = input.dataset.name;
-    const required = input.dataset.required === 'true';
-
-    if (required && !value) {
-      window.showMessage(`필수 항목 "${itemName}"을(를) 입력해주세요.`, 'error');
-      return;
-    }
-
-    textItems[itemName] = value;
-  }
-
-  // 총평 찾기 (기본 총평 필드가 있을 수 있음)
-  let review = '';
-  const reviewTextarea = document.getElementById('text_총평');
-  if (reviewTextarea) {
-    review = reviewTextarea.value;
-  } else {
-    // 텍스트 항목 중 첫 번째를 총평으로 사용
-    const textValues = Object.values(textItems);
-    if (textValues.length > 0) {
-      review = textValues[0];
-    }
-  }
-
-  try {
-    // 기존 점수가 있는지 확인
-    const scoresQuery = query(collection(db, 'scores'),
-      where("projectId", "==", projectId),
-      where("judgeId", "==", window.appState.currentUser.userId)
-    );
-    const scoresSnapshot = await getDocs(scoresQuery);
-
-    const scoreData = {
-      projectId: projectId,
-      judgeId: window.appState.currentUser.userId,
-      judgeName: window.appState.currentUser.name,
-      itemScores: itemScores,
-      textItems: textItems,
-      totalScore: totalScore,
-      review: review,
-      updatedAt: new Date()
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      setDoc,
+      getDocs,
+      doc,
+      query,
+      where,
+      getDoc,
+      writeBatch
+    } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
+    const ALL_ORGANIZATIONS = Object.freeze([
+      'NW기획담당',
+      'NW인사/지원담당',
+      'NW인프라그룹',
+      '인프라지원담당',
+      '수도권인프라담당',
+      '경인인프라담당',
+      '중부인프라담당',
+      '경남인프라담당',
+      '경북인프라담당',
+      '충청인프라담당',
+      '호남인프라담당'
+    ]);
+
+    const TARGET_ORGANIZATIONS = Object.freeze([
+      '수도권인프라담당',
+      '경인인프라담당',
+      '중부인프라담당',
+      '경남인프라담당',
+      '경북인프라담당',
+      '충청인프라담당',
+      '호남인프라담당'
+    ]);
+
+    const POSITIONS = Object.freeze(['그룹장', '담당']);
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAioCv4Fix5U7Nj-iXgdwNwQcPtLxOfgIE",
+      authDomain: "nwctc-b9e7c.firebaseapp.com",
+      projectId: "nwctc-b9e7c",
+      storageBucket: "nwctc-b9e7c.firebasestorage.app",
+      messagingSenderId: "884751378263",
+      appId: "1:884751378263:web:63f102fe2f0245b1f0c012"
     };
 
-    if (!scoresSnapshot.empty) {
-      // 기존 점수 업데이트
-      const scoreDoc = scoresSnapshot.docs[0];
-      await updateDoc(doc(db, 'scores', scoreDoc.id), scoreData);
-      window.showMessage('채점이 수정되었습니다!', 'success');
-    } else {
-      // 새로운 점수 추가
-      scoreData.createdAt = new Date();
-      await addDoc(collection(db, 'scores'), scoreData);
-      window.showMessage('채점이 완료되었습니다!', 'success');
+    const firebaseApp = initializeApp(firebaseConfig);
+    const db = getFirestore(firebaseApp);
+
+    window.appState = {
+      currentUser: null,
+      projects: [],
+      votes: [],
+      editingUserId: null,
+      editingProjectId: null
+    };
+
+    const byId = id => document.getElementById(id);
+    const trimValue = id => byId(id).value.trim();
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>'"]/g, character => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#39;',
+        '"': '&quot;'
+      })[character]);
     }
 
-    document.getElementById('scoringForm').remove();
-    loadJudgeProjects(); // 목록 새로고침
-  } catch (error) {
-    window.showMessage('채점 제출 중 오류가 발생했습니다.', 'error');
-  }
-};
+    function showMessage(message, type = 'info') {
+      const container = byId('messageContainer');
+      const messageElement = document.createElement('div');
+      messageElement.className = `${type}-message`;
+      messageElement.textContent = message;
+      container.replaceChildren(messageElement);
 
-// 로그인 화면 진입 시 필요한 초기 데이터 생성
-let databaseInitializationPromise = null;
+      window.setTimeout(() => {
+        messageElement.style.opacity = '0';
+        window.setTimeout(() => {
+          if (container.contains(messageElement)) container.replaceChildren();
+        }, 300);
+      }, 3200);
+    }
 
-async function initializeDatabase() {
-  const maxAttempts = 3;
-  let lastError;
+    window.showMessage = showMessage;
 
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      const q = query(collection(db, 'users'), where("userId", "==", "admin"));
-      const querySnapshot = await getDocs(q);
+    function populateSelect(selectId, values, placeholder) {
+      const select = byId(selectId);
+      select.replaceChildren();
 
-      if (querySnapshot.empty) {
-        // 고정 문서 ID를 사용해 여러 사용자가 동시에 접속해도 중복 생성을 방지한다.
-        await setDoc(doc(db, 'users', 'admin'), {
-          name: "관리자",
-          userId: "admin",
-          password: "init1234",
-          role: "admin",
+      const placeholderOption = document.createElement('option');
+      placeholderOption.value = '';
+      placeholderOption.textContent = placeholder;
+      select.appendChild(placeholderOption);
+
+      values.forEach(value => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = value;
+        select.appendChild(option);
+      });
+    }
+
+    function saveSession(user) {
+      window.appState.currentUser = user;
+      try {
+        sessionStorage.setItem('currentUser', JSON.stringify(user));
+      } catch (error) {
+        console.warn('세션 정보를 저장할 수 없습니다.', error);
+      }
+    }
+
+    function clearSession() {
+      window.appState.currentUser = null;
+      try {
+        sessionStorage.removeItem('currentUser');
+      } catch (error) {
+        console.warn('세션 정보를 삭제할 수 없습니다.', error);
+      }
+    }
+
+    function showOnlyPage(pageId) {
+      document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+      byId(pageId).classList.add('active');
+    }
+
+    function projectOrganization(project) {
+      if (TARGET_ORGANIZATIONS.includes(project.organization)) return project.organization;
+      if (TARGET_ORGANIZATIONS.includes(project.performingOrganization)) return project.performingOrganization;
+      if (TARGET_ORGANIZATIONS.includes(project.teamName)) return project.teamName;
+      return '';
+    }
+
+    function projectTitle(project) {
+      return project.title || project.teamName || '이름 없는 과제';
+    }
+
+    function hasCompleteJudgeProfile(user) {
+      return POSITIONS.includes(user?.position) && ALL_ORGANIZATIONS.includes(user?.organization);
+    }
+
+    function canJudgeVoteFor(user, project) {
+      const organization = projectOrganization(project);
+      if (!hasCompleteJudgeProfile(user) || !organization) return false;
+      return user.position === '그룹장' || user.organization !== organization;
+    }
+
+    function organizationOrder(organization) {
+      const index = TARGET_ORGANIZATIONS.indexOf(organization);
+      return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+    }
+
+    async function showAuthenticatedPage(user) {
+      if (user.role === 'admin') {
+        showOnlyPage('adminPage');
+        await window.loadAdminData();
+        return;
+      }
+
+      if (user.role === 'judge') {
+        showOnlyPage('judgePage');
+        byId('judgeName').textContent = user.name;
+        await window.loadJudgeProjects();
+        return;
+      }
+
+      clearSession();
+      showOnlyPage('loginPage');
+      showMessage('사용자 권한을 확인할 수 없습니다.', 'error');
+    }
+
+    let databaseInitializationPromise = null;
+
+    async function initializeDatabase() {
+      const adminQuery = query(collection(db, 'users'), where('userId', '==', 'admin'));
+      const adminSnapshot = await getDocs(adminQuery);
+
+      if (!adminSnapshot.empty) return { adminCreated: false };
+
+      await setDoc(doc(db, 'users', 'admin'), {
+        name: '관리자',
+        userId: 'admin',
+        password: 'init1234',
+        role: 'admin',
+        createdAt: new Date()
+      });
+
+      return { adminCreated: true };
+    }
+
+    function ensureDatabaseInitialized() {
+      if (!databaseInitializationPromise) {
+        databaseInitializationPromise = initializeDatabase().catch(error => {
+          databaseInitializationPromise = null;
+          throw error;
+        });
+      }
+      return databaseInitializationPromise;
+    }
+
+    window.login = async function (event) {
+      event?.preventDefault();
+      const userId = trimValue('loginId');
+      const password = byId('loginPassword').value;
+
+      if (!userId || !password) {
+        showMessage('아이디와 비밀번호를 입력하세요.', 'error');
+        return;
+      }
+
+      try {
+        await ensureDatabaseInitialized();
+        const userQuery = query(collection(db, 'users'), where('userId', '==', userId));
+        const snapshot = await getDocs(userQuery);
+        const userDocument = snapshot.docs.find(candidate => candidate.data().password === password);
+
+        if (!userDocument) {
+          showMessage('아이디 또는 비밀번호가 올바르지 않습니다.', 'error');
+          return;
+        }
+
+        const user = { id: userDocument.id, ...userDocument.data() };
+        saveSession(user);
+        byId('loginPassword').value = '';
+        await showAuthenticatedPage(user);
+      } catch (error) {
+        console.error('로그인 실패:', error);
+        showMessage('로그인 중 오류가 발생했습니다.', 'error');
+      }
+    };
+
+    window.logout = function () {
+      if (!window.confirm('로그아웃하시겠습니까?')) return;
+      clearSession();
+      byId('loginId').value = '';
+      byId('loginPassword').value = '';
+      showOnlyPage('loginPage');
+      showMessage('로그아웃되었습니다.', 'info');
+    };
+
+    window.switchTab = function (tabName, clickedButton) {
+      document.querySelectorAll('.tab-btn').forEach(button => button.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+      const targetButton = clickedButton || document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+      targetButton?.classList.add('active');
+      byId(`${tabName}Tab`)?.classList.add('active');
+
+      if (tabName === 'projectList') window.loadAdminProjects();
+      if (tabName === 'judges') window.loadJudgesList();
+    };
+
+    window.registerProject = async function (event) {
+      event?.preventDefault();
+      const title = trimValue('projectTitle');
+      const organization = byId('projectOrganization').value;
+
+      if (!title || !TARGET_ORGANIZATIONS.includes(organization)) {
+        showMessage('과제명과 과제 수행 조직을 선택하세요.', 'error');
+        return;
+      }
+
+      try {
+        await addDoc(collection(db, 'projects'), {
+          title,
+          organization,
+          createdBy: window.appState.currentUser.userId,
           createdAt: new Date()
         });
 
-        return { adminCreated: true };
+        byId('projectTitle').value = '';
+        byId('projectOrganization').value = '';
+        showMessage('과제가 등록되었습니다.', 'success');
+        window.switchTab('projectList');
+      } catch (error) {
+        console.error('과제 등록 실패:', error);
+        showMessage('과제 등록 중 오류가 발생했습니다.', 'error');
+      }
+    };
+
+    window.editProject = async function (projectId) {
+      try {
+        const snapshot = await getDoc(doc(db, 'projects', projectId));
+        if (!snapshot.exists()) {
+          showMessage('과제를 찾을 수 없습니다.', 'error');
+          return;
+        }
+
+        const project = snapshot.data();
+        window.appState.editingProjectId = projectId;
+        byId('editProjectTitle').value = projectTitle(project);
+        byId('editProjectOrganization').value = projectOrganization(project);
+        byId('editProjectModal').classList.add('active');
+      } catch (error) {
+        console.error('과제 조회 실패:', error);
+        showMessage('과제 정보를 불러오지 못했습니다.', 'error');
+      }
+    };
+
+    window.closeProjectModal = function () {
+      byId('editProjectModal').classList.remove('active');
+      window.appState.editingProjectId = null;
+    };
+
+    window.updateProject = async function (event) {
+      event?.preventDefault();
+      const projectId = window.appState.editingProjectId;
+      const title = trimValue('editProjectTitle');
+      const organization = byId('editProjectOrganization').value;
+
+      if (!projectId || !title || !TARGET_ORGANIZATIONS.includes(organization)) {
+        showMessage('과제명과 과제 수행 조직을 확인하세요.', 'error');
+        return;
       }
 
-      return { adminCreated: false };
-    } catch (error) {
-      lastError = error;
+      try {
+        const votesSnapshot = await getDocs(query(collection(db, 'votes'), where('projectId', '==', projectId)));
+        const voteUserDocuments = await Promise.all(votesSnapshot.docs.map(voteDocument => {
+          const vote = voteDocument.data();
+          const judgeDocumentId = vote.judgeDocId || voteDocument.id;
+          return getDoc(doc(db, 'users', judgeDocumentId));
+        }));
 
-      if (attempt < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+        const invalidVoteIds = new Set();
+        votesSnapshot.docs.forEach((voteDocument, index) => {
+          const userDocument = voteUserDocuments[index];
+          const user = userDocument.exists() ? userDocument.data() : voteDocument.data();
+          if (user.position === '담당' && user.organization === organization) {
+            invalidVoteIds.add(voteDocument.id);
+          }
+        });
+
+        if (invalidVoteIds.size > 0) {
+          const confirmed = window.confirm(`수행 조직을 변경하면 동일 조직 심사위원의 ${invalidVoteIds.size}표가 무효가 되어 삭제됩니다. 계속하시겠습니까?`);
+          if (!confirmed) return;
+        }
+
+        const batch = writeBatch(db);
+        const now = new Date();
+        batch.update(doc(db, 'projects', projectId), { title, organization, updatedAt: now });
+
+        votesSnapshot.docs.forEach(voteDocument => {
+          if (invalidVoteIds.has(voteDocument.id)) {
+            batch.delete(voteDocument.ref);
+          } else {
+            batch.update(voteDocument.ref, {
+              projectTitle: title,
+              projectOrganization: organization,
+              updatedAt: now
+            });
+          }
+        });
+
+        await batch.commit();
+        window.closeProjectModal();
+        showMessage('과제 정보가 수정되었습니다.', 'success');
+        await window.loadAdminProjects();
+      } catch (error) {
+        console.error('과제 수정 실패:', error);
+        showMessage('과제 수정 중 오류가 발생했습니다.', 'error');
       }
-    }
-  }
+    };
 
-  throw lastError;
-}
+    window.deleteProject = async function (projectId) {
+      const project = window.appState.projects.find(item => item.id === projectId);
+      const title = project ? projectTitle(project) : '선택한 과제';
+      if (!window.confirm(`「${title}」 과제와 해당 투표 내역을 삭제하시겠습니까?`)) return;
 
-function ensureDatabaseInitialized() {
-  if (!databaseInitializationPromise) {
-    databaseInitializationPromise = initializeDatabase().catch(error => {
-      // 다음 로그인 시 다시 초기화를 시도할 수 있도록 실패한 Promise를 제거한다.
-      databaseInitializationPromise = null;
-      throw error;
-    });
-  }
+      try {
+        const votesSnapshot = await getDocs(query(collection(db, 'votes'), where('projectId', '==', projectId)));
+        const batch = writeBatch(db);
+        batch.delete(doc(db, 'projects', projectId));
+        votesSnapshot.docs.forEach(voteDocument => batch.delete(voteDocument.ref));
+        await batch.commit();
+        showMessage('과제와 관련 투표 내역이 삭제되었습니다.', 'success');
+        await window.loadAdminProjects();
+      } catch (error) {
+        console.error('과제 삭제 실패:', error);
+        showMessage('과제 삭제 중 오류가 발생했습니다.', 'error');
+      }
+    };
 
-  return databaseInitializationPromise;
-}
+    window.loadAdminProjects = async function () {
+      try {
+        const [projectsSnapshot, votesSnapshot] = await Promise.all([
+          getDocs(collection(db, 'projects')),
+          getDocs(collection(db, 'votes'))
+        ]);
 
-async function initializeLoginPage() {
-  try {
-    const result = await ensureDatabaseInitialized();
+        const votes = votesSnapshot.docs.map(voteDocument => ({ id: voteDocument.id, ...voteDocument.data() }));
+        const votesByProject = new Map();
+        votes.forEach(vote => {
+          if (!votesByProject.has(vote.projectId)) votesByProject.set(vote.projectId, []);
+          votesByProject.get(vote.projectId).push(vote);
+        });
 
-    if (result.adminCreated) {
-      window.showMessage('초기 데이터베이스 설정이 완료되었습니다.', 'success');
-    }
-  } catch (error) {
-    console.error('초기 데이터베이스 설정 실패:', error);
-    window.showMessage('초기 데이터베이스 설정에 실패했습니다. 로그인하면 다시 시도합니다.', 'error');
-  }
-}
+        const projects = projectsSnapshot.docs.map(projectDocument => {
+          const data = { id: projectDocument.id, ...projectDocument.data() };
+          data.votes = votesByProject.get(data.id) || [];
+          return data;
+        });
 
-// Enter 키 이벤트 처리
-document.getElementById('loginId').addEventListener('keypress', function (e) {
-  if (e.key === 'Enter') {
-    document.getElementById('loginPassword').focus();
-  }
-});
+        projects.sort((left, right) => {
+          const voteDifference = right.votes.length - left.votes.length;
+          if (voteDifference) return voteDifference;
+          const organizationDifference = organizationOrder(projectOrganization(left)) - organizationOrder(projectOrganization(right));
+          if (organizationDifference) return organizationDifference;
+          return projectTitle(left).localeCompare(projectTitle(right), 'ko');
+        });
 
-document.getElementById('loginPassword').addEventListener('keypress', function (e) {
-  if (e.key === 'Enter') {
-    login();
-  }
-});
+        window.appState.projects = projects;
+        window.appState.votes = votes;
 
-// 로그인 화면 진입 시 초기 데이터 확인 및 생성
-initializeLoginPage();
+        const validVoteCount = projects.reduce((total, project) => total + project.votes.length, 0);
+        byId('voteSummary').innerHTML = `
+          <span class="summary-chip">평가 과제 ${projects.length}개</span>
+          <span class="summary-chip">참여 심사위원 ${validVoteCount}명</span>
+        `;
 
-// 페이지 로드 시 로그인 상태 확인
-document.addEventListener('DOMContentLoaded', function () {
-  try {
-    const savedUser = sessionStorage.getItem('currentUser');
-    if (savedUser) {
-      window.appState.currentUser = JSON.parse(savedUser);
+        const list = byId('adminProjectList');
+        list.replaceChildren();
 
-      // Firebase 초기화 완료 후 상태 복원
-      setTimeout(() => {
-        if (window.appState.currentUser) {
-          document.getElementById('loginPage').classList.remove('active');
+        if (projects.length === 0) {
+          list.innerHTML = '<div class="empty-state">등록된 평가 과제가 없습니다.</div>';
+          return;
+        }
 
-          if (window.appState.currentUser.role === 'admin') {
-            document.getElementById('adminPage').classList.add('active');
-            loadAdminData();
-          } else if (window.appState.currentUser.role === 'judge') {
-            document.getElementById('judgePage').classList.add('active');
-            document.getElementById('judgeName').textContent = window.appState.currentUser.name;
-            loadJudgeProjects();
+        projects.forEach(project => {
+          const organization = projectOrganization(project);
+          const card = document.createElement('article');
+          card.className = 'card admin-project-card';
+          const voters = [...project.votes].sort((left, right) => String(left.judgeName || '').localeCompare(String(right.judgeName || ''), 'ko'));
+
+          card.innerHTML = `
+            <div class="card-header">
+              <div class="project-copy">
+                <span class="project-title">${escapeHtml(projectTitle(project))}</span>
+                <div class="badge-row">
+                  <span class="organization-badge">${escapeHtml(organization || '수행 조직 미설정')}</span>
+                  ${organization ? '' : '<span class="status-badge warning">수정 필요</span>'}
+                </div>
+              </div>
+              <div class="badge-row">
+                <span class="vote-count">${voters.length}표</span>
+                <div class="project-actions">
+                  <button type="button" class="edit-btn">수정</button>
+                  <button type="button" class="delete-btn">삭제</button>
+                </div>
+              </div>
+            </div>
+            ${voters.length > 0 ? `
+              <details class="voter-details">
+                <summary>투표자 ${voters.length}명 보기</summary>
+                <ul class="voter-list">
+                  ${voters.map(vote => `<li>${escapeHtml(vote.judgeName || '이름 미상')} · ${escapeHtml(vote.judgePosition || '직책 미상')} · ${escapeHtml(vote.judgeOrganization || '조직 미상')}</li>`).join('')}
+                </ul>
+              </details>
+            ` : ''}
+          `;
+
+          card.querySelector('.edit-btn').addEventListener('click', () => window.editProject(project.id));
+          card.querySelector('.delete-btn').addEventListener('click', () => window.deleteProject(project.id));
+          list.appendChild(card);
+        });
+      } catch (error) {
+        console.error('과제 목록 조회 실패:', error);
+        showMessage('과제와 투표 현황을 불러오지 못했습니다.', 'error');
+      }
+    };
+
+    window.registerUser = async function (event) {
+      event?.preventDefault();
+      const name = trimValue('userName');
+      const userId = trimValue('userId');
+      const position = byId('userPosition').value;
+      const organization = byId('userOrganization').value;
+
+      if (!name || !userId || !POSITIONS.includes(position) || !ALL_ORGANIZATIONS.includes(organization)) {
+        showMessage('이름, 아이디, 직책, 소속 조직을 모두 입력하세요.', 'error');
+        return;
+      }
+
+      try {
+        const duplicateSnapshot = await getDocs(query(collection(db, 'users'), where('userId', '==', userId)));
+        if (!duplicateSnapshot.empty) {
+          showMessage('이미 사용 중인 아이디입니다.', 'error');
+          return;
+        }
+
+        const randomNumbers = window.crypto.getRandomValues(new Uint16Array(1))[0].toString().padStart(5, '0').slice(-4);
+        const password = `${userId}${randomNumbers}`;
+
+        await addDoc(collection(db, 'users'), {
+          name,
+          userId,
+          password,
+          role: 'judge',
+          position,
+          organization,
+          createdAt: new Date()
+        });
+
+        byId('userName').value = '';
+        byId('userId').value = '';
+        byId('userPosition').value = '';
+        byId('userOrganization').value = '';
+        showMessage(`등록 완료 · 아이디: ${userId} · 비밀번호: ${password}`, 'success');
+      } catch (error) {
+        console.error('심사위원 등록 실패:', error);
+        showMessage('심사위원 등록 중 오류가 발생했습니다.', 'error');
+      }
+    };
+
+    window.loadJudgesList = async function () {
+      try {
+        const [judgesSnapshot, votesSnapshot, projectsSnapshot] = await Promise.all([
+          getDocs(query(collection(db, 'users'), where('role', '==', 'judge'))),
+          getDocs(collection(db, 'votes')),
+          getDocs(collection(db, 'projects'))
+        ]);
+
+        const votesByJudge = new Map();
+        votesSnapshot.docs.forEach(voteDocument => {
+          const vote = { id: voteDocument.id, ...voteDocument.data() };
+          votesByJudge.set(vote.judgeDocId || voteDocument.id, vote);
+        });
+
+        const projectsById = new Map(projectsSnapshot.docs.map(projectDocument => [
+          projectDocument.id,
+          { id: projectDocument.id, ...projectDocument.data() }
+        ]));
+
+        const judges = judgesSnapshot.docs
+          .map(judgeDocument => ({ id: judgeDocument.id, ...judgeDocument.data() }))
+          .sort((left, right) => String(left.name || '').localeCompare(String(right.name || ''), 'ko'));
+
+        const list = byId('judgesList');
+        list.replaceChildren();
+
+        if (judges.length === 0) {
+          list.innerHTML = '<div class="empty-state">등록된 심사위원이 없습니다.</div>';
+          return;
+        }
+
+        judges.forEach(judge => {
+          const vote = votesByJudge.get(judge.id);
+          const votedProject = vote ? projectsById.get(vote.projectId) : null;
+          const card = document.createElement('article');
+          card.className = 'user-card';
+          card.innerHTML = `
+            <div class="user-info">
+              <div class="user-name">${escapeHtml(judge.name || '이름 미상')}</div>
+              <div class="user-credentials">아이디: ${escapeHtml(judge.userId || '')} · 비밀번호: ${escapeHtml(judge.password || '')}</div>
+              <div class="badge-row user-meta">
+                <span class="position-badge">${escapeHtml(judge.position || '직책 미설정')}</span>
+                <span class="organization-badge">${escapeHtml(judge.organization || '조직 미설정')}</span>
+                <span class="status-badge ${vote ? 'success' : 'warning'}">${vote ? `투표: ${escapeHtml(votedProject ? projectTitle(votedProject) : vote.projectTitle || '삭제된 과제')}` : '미투표'}</span>
+                ${hasCompleteJudgeProfile(judge) ? '' : '<span class="status-badge warning">정보 보완 필요</span>'}
+              </div>
+            </div>
+            <div class="action-buttons">
+              <button type="button" class="edit-btn">수정</button>
+              <button type="button" class="delete-btn">삭제</button>
+            </div>
+          `;
+
+          card.querySelector('.edit-btn').addEventListener('click', () => window.editUser(judge.id));
+          card.querySelector('.delete-btn').addEventListener('click', () => window.deleteUser(judge.id, judge.name));
+          list.appendChild(card);
+        });
+      } catch (error) {
+        console.error('심사위원 목록 조회 실패:', error);
+        showMessage('심사위원 목록을 불러오지 못했습니다.', 'error');
+      }
+    };
+
+    window.editUser = async function (judgeDocumentId) {
+      try {
+        const snapshot = await getDoc(doc(db, 'users', judgeDocumentId));
+        if (!snapshot.exists()) {
+          showMessage('심사위원을 찾을 수 없습니다.', 'error');
+          return;
+        }
+
+        const judge = snapshot.data();
+        window.appState.editingUserId = judgeDocumentId;
+        byId('editName').value = judge.name || '';
+        byId('editUserId').value = judge.userId || '';
+        byId('editPassword').value = judge.password || '';
+        byId('editPosition').value = judge.position || '';
+        byId('editOrganization').value = judge.organization || '';
+        byId('editUserModal').classList.add('active');
+      } catch (error) {
+        console.error('심사위원 조회 실패:', error);
+        showMessage('심사위원 정보를 불러오지 못했습니다.', 'error');
+      }
+    };
+
+    window.closeUserModal = function () {
+      byId('editUserModal').classList.remove('active');
+      window.appState.editingUserId = null;
+    };
+
+    window.updateUser = async function (event) {
+      event?.preventDefault();
+      const judgeDocumentId = window.appState.editingUserId;
+      const name = trimValue('editName');
+      const userId = trimValue('editUserId');
+      const password = byId('editPassword').value.trim();
+      const position = byId('editPosition').value;
+      const organization = byId('editOrganization').value;
+
+      if (!judgeDocumentId || !name || !userId || !password || !POSITIONS.includes(position) || !ALL_ORGANIZATIONS.includes(organization)) {
+        showMessage('심사위원 정보를 모두 입력하세요.', 'error');
+        return;
+      }
+
+      try {
+        const duplicateSnapshot = await getDocs(query(collection(db, 'users'), where('userId', '==', userId)));
+        if (duplicateSnapshot.docs.some(candidate => candidate.id !== judgeDocumentId)) {
+          showMessage('이미 사용 중인 아이디입니다.', 'error');
+          return;
+        }
+
+        const voteReference = doc(db, 'votes', judgeDocumentId);
+        const voteSnapshot = await getDoc(voteReference);
+        let invalidVote = false;
+
+        if (voteSnapshot.exists() && position === '담당') {
+          const vote = voteSnapshot.data();
+          const projectSnapshot = await getDoc(doc(db, 'projects', vote.projectId));
+          const votedOrganization = projectSnapshot.exists()
+            ? projectOrganization(projectSnapshot.data())
+            : vote.projectOrganization;
+          invalidVote = organization === votedOrganization;
+        }
+
+        if (invalidVote && !window.confirm('변경할 소속 조직과 현재 투표한 과제의 수행 조직이 같습니다. 정보 수정 시 기존 투표가 삭제됩니다. 계속하시겠습니까?')) {
+          return;
+        }
+
+        const batch = writeBatch(db);
+        batch.update(doc(db, 'users', judgeDocumentId), {
+          name,
+          userId,
+          password,
+          position,
+          organization,
+          updatedAt: new Date()
+        });
+
+        if (voteSnapshot.exists()) {
+          if (invalidVote) {
+            batch.delete(voteReference);
+          } else {
+            batch.update(voteReference, {
+              judgeId: userId,
+              judgeName: name,
+              judgePosition: position,
+              judgeOrganization: organization,
+              updatedAt: new Date()
+            });
           }
         }
-      }, 500); // Firebase 초기화를 위한 약간의 지연
+
+        await batch.commit();
+        window.closeUserModal();
+        showMessage(invalidVote ? '심사위원 정보가 수정되고 무효 투표가 삭제되었습니다.' : '심사위원 정보가 수정되었습니다.', 'success');
+        await window.loadJudgesList();
+      } catch (error) {
+        console.error('심사위원 수정 실패:', error);
+        showMessage('심사위원 정보 수정 중 오류가 발생했습니다.', 'error');
+      }
+    };
+
+    window.deleteUser = async function (judgeDocumentId, judgeName) {
+      if (!window.confirm(`${judgeName || '선택한 심사위원'} 계정과 투표 내역을 삭제하시겠습니까?`)) return;
+
+      try {
+        const batch = writeBatch(db);
+        batch.delete(doc(db, 'users', judgeDocumentId));
+        batch.delete(doc(db, 'votes', judgeDocumentId));
+        await batch.commit();
+        showMessage('심사위원과 투표 내역이 삭제되었습니다.', 'success');
+        await window.loadJudgesList();
+      } catch (error) {
+        console.error('심사위원 삭제 실패:', error);
+        showMessage('심사위원 삭제 중 오류가 발생했습니다.', 'error');
+      }
+    };
+
+    window.loadJudgeProjects = async function () {
+      try {
+        const currentUser = window.appState.currentUser;
+        const userSnapshot = await getDoc(doc(db, 'users', currentUser.id));
+        if (!userSnapshot.exists() || userSnapshot.data().role !== 'judge') {
+          clearSession();
+          showOnlyPage('loginPage');
+          showMessage('계정 정보를 확인할 수 없습니다. 다시 로그인하세요.', 'error');
+          return;
+        }
+
+        const user = { id: userSnapshot.id, ...userSnapshot.data() };
+        saveSession(user);
+        byId('judgeName').textContent = user.name;
+        byId('judgeProfile').textContent = `${user.position || '직책 미설정'} · ${user.organization || '소속 조직 미설정'}`;
+
+        const [projectsSnapshot, voteSnapshot] = await Promise.all([
+          getDocs(collection(db, 'projects')),
+          getDoc(doc(db, 'votes', user.id))
+        ]);
+
+        const existingVote = voteSnapshot.exists() ? { id: voteSnapshot.id, ...voteSnapshot.data() } : null;
+        const projects = projectsSnapshot.docs
+          .map(projectDocument => ({ id: projectDocument.id, ...projectDocument.data() }))
+          .sort((left, right) => {
+            const organizationDifference = organizationOrder(projectOrganization(left)) - organizationOrder(projectOrganization(right));
+            if (organizationDifference) return organizationDifference;
+            return projectTitle(left).localeCompare(projectTitle(right), 'ko');
+          });
+
+        window.appState.projects = projects;
+        window.appState.votes = existingVote ? [existingVote] : [];
+
+        const list = byId('judgeProjectList');
+        list.replaceChildren();
+
+        if (projects.length === 0) {
+          list.innerHTML = '<div class="empty-state">등록된 평가 과제가 없습니다.</div>';
+        } else {
+          projects.forEach(project => {
+            const organization = projectOrganization(project);
+            const profileIncomplete = !hasCompleteJudgeProfile(user);
+            const organizationMissing = !organization;
+            const sameOrganization = user.position === '담당' && user.organization === organization;
+            const disabled = profileIncomplete || organizationMissing || sameOrganization;
+            let disabledReason = '';
+
+            if (profileIncomplete) disabledReason = '직책 또는 소속 조직 정보가 없어 투표할 수 없습니다. 관리자에게 문의하세요.';
+            else if (organizationMissing) disabledReason = '과제 수행 조직이 설정되지 않아 투표할 수 없습니다.';
+            else if (sameOrganization) disabledReason = '본인과 같은 조직이 수행한 과제에는 투표할 수 없습니다.';
+
+            const choice = document.createElement('label');
+            choice.className = `card vote-choice${disabled ? ' is-disabled' : ''}${existingVote?.projectId === project.id ? ' is-selected' : ''}`;
+            choice.innerHTML = `
+              <div class="vote-choice-row">
+                <input type="radio" name="projectVote" value="${escapeHtml(project.id)}" ${existingVote?.projectId === project.id ? 'checked' : ''} ${disabled ? 'disabled' : ''}>
+                <div class="project-copy">
+                  <span class="project-title">${escapeHtml(projectTitle(project))}</span>
+                  <span class="organization-badge">${escapeHtml(organization || '수행 조직 미설정')}</span>
+                  ${disabledReason ? `<span class="disabled-reason">${escapeHtml(disabledReason)}</span>` : ''}
+                </div>
+              </div>
+            `;
+            choice.querySelector('input').addEventListener('change', updateVoteSelectionUI);
+            list.appendChild(choice);
+          });
+        }
+
+        const eligibleProjects = projects.filter(project => canJudgeVoteFor(user, project));
+        const voteStatus = byId('currentVoteStatus');
+        const submitButton = byId('voteSubmitButton');
+
+        if (existingVote) {
+          const selectedProject = projects.find(project => project.id === existingVote.projectId);
+          voteStatus.textContent = `현재 투표: ${selectedProject ? projectTitle(selectedProject) : existingVote.projectTitle || '삭제된 과제'}`;
+          submitButton.textContent = '투표 변경';
+        } else {
+          voteStatus.textContent = '아직 투표하지 않았습니다.';
+          submitButton.textContent = '투표하기';
+        }
+
+        submitButton.disabled = !hasCompleteJudgeProfile(user) || eligibleProjects.length === 0;
+        updateVoteSelectionUI();
+      } catch (error) {
+        console.error('평가 과제 조회 실패:', error);
+        showMessage('평가 과제를 불러오지 못했습니다.', 'error');
+      }
+    };
+
+    function updateVoteSelectionUI() {
+      document.querySelectorAll('.vote-choice').forEach(choice => {
+        const radio = choice.querySelector('input[type="radio"]');
+        choice.classList.toggle('is-selected', Boolean(radio?.checked));
+      });
     }
-  } catch (e) {
-    // sessionStorage 사용 불가 시 무시
-  }
-});
-</script>
+
+    window.submitVote = async function (event) {
+      event?.preventDefault();
+      const selected = document.querySelector('input[name="projectVote"]:checked:not(:disabled)');
+      if (!selected) {
+        showMessage('투표할 과제 하나를 선택하세요.', 'error');
+        return;
+      }
+
+      const currentUser = window.appState.currentUser;
+      const selectedProjectId = selected.value;
+
+      try {
+        const [userSnapshot, projectSnapshot] = await Promise.all([
+          getDoc(doc(db, 'users', currentUser.id)),
+          getDoc(doc(db, 'projects', selectedProjectId))
+        ]);
+
+        if (!userSnapshot.exists() || userSnapshot.data().role !== 'judge') {
+          showMessage('심사위원 계정 정보를 확인할 수 없습니다.', 'error');
+          return;
+        }
+
+        if (!projectSnapshot.exists()) {
+          showMessage('선택한 과제가 삭제되었습니다. 목록을 새로 불러옵니다.', 'error');
+          await window.loadJudgeProjects();
+          return;
+        }
+
+        const user = { id: userSnapshot.id, ...userSnapshot.data() };
+        const project = { id: projectSnapshot.id, ...projectSnapshot.data() };
+        const organization = projectOrganization(project);
+
+        if (!hasCompleteJudgeProfile(user)) {
+          showMessage('직책과 소속 조직 정보가 필요합니다. 관리자에게 문의하세요.', 'error');
+          return;
+        }
+
+        if (!organization || !TARGET_ORGANIZATIONS.includes(organization)) {
+          showMessage('평가 대상 조직이 설정된 과제만 투표할 수 있습니다.', 'error');
+          return;
+        }
+
+        if (!canJudgeVoteFor(user, project)) {
+          showMessage('담당 심사위원은 본인과 같은 조직의 과제에 투표할 수 없습니다.', 'error');
+          return;
+        }
+
+        const voteReference = doc(db, 'votes', user.id);
+        const existingVoteSnapshot = await getDoc(voteReference);
+        const existingVote = existingVoteSnapshot.exists() ? existingVoteSnapshot.data() : null;
+
+        if (existingVote && existingVote.projectId !== project.id) {
+          const confirmed = window.confirm(`기존 투표를 「${projectTitle(project)}」 과제로 변경하시겠습니까?`);
+          if (!confirmed) return;
+        }
+
+        await setDoc(voteReference, {
+          projectId: project.id,
+          projectTitle: projectTitle(project),
+          projectOrganization: organization,
+          judgeDocId: user.id,
+          judgeId: user.userId,
+          judgeName: user.name,
+          judgePosition: user.position,
+          judgeOrganization: user.organization,
+          createdAt: existingVote?.createdAt || new Date(),
+          updatedAt: new Date()
+        });
+
+        showMessage(existingVote ? '투표가 반영되었습니다.' : '투표가 완료되었습니다.', 'success');
+        await window.loadJudgeProjects();
+      } catch (error) {
+        console.error('투표 제출 실패:', error);
+        showMessage('투표 처리 중 오류가 발생했습니다.', 'error');
+      }
+    };
+
+    async function deleteSnapshotDocuments(snapshot) {
+      const documents = snapshot.docs;
+      const chunkSize = 450;
+
+      for (let start = 0; start < documents.length; start += chunkSize) {
+        const batch = writeBatch(db);
+        documents.slice(start, start + chunkSize).forEach(documentSnapshot => batch.delete(documentSnapshot.ref));
+        await batch.commit();
+      }
+    }
+
+    window.resetVotes = async function () {
+      if (!window.confirm('모든 심사위원의 투표 내역을 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
+
+      try {
+        const snapshot = await getDocs(collection(db, 'votes'));
+        await deleteSnapshotDocuments(snapshot);
+        showMessage(`${snapshot.size}개의 투표 내역이 초기화되었습니다.`, 'success');
+        await window.loadAdminProjects();
+      } catch (error) {
+        console.error('투표 초기화 실패:', error);
+        showMessage('투표 내역 초기화 중 오류가 발생했습니다.', 'error');
+      }
+    };
+
+    window.resetProjects = async function () {
+      if (!window.confirm('모든 과제와 전체 투표 내역을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
+
+      try {
+        const [projectsSnapshot, votesSnapshot] = await Promise.all([
+          getDocs(collection(db, 'projects')),
+          getDocs(collection(db, 'votes'))
+        ]);
+        await deleteSnapshotDocuments(votesSnapshot);
+        await deleteSnapshotDocuments(projectsSnapshot);
+        showMessage('모든 과제와 투표 내역이 삭제되었습니다.', 'success');
+        await window.loadAdminProjects();
+      } catch (error) {
+        console.error('과제 초기화 실패:', error);
+        showMessage('과제 초기화 중 오류가 발생했습니다.', 'error');
+      }
+    };
+
+    window.resetJudges = async function () {
+      if (!window.confirm('모든 심사위원 계정과 투표 내역을 삭제하시겠습니까? 관리자 계정은 유지됩니다.')) return;
+
+      try {
+        const [judgesSnapshot, votesSnapshot] = await Promise.all([
+          getDocs(query(collection(db, 'users'), where('role', '==', 'judge'))),
+          getDocs(collection(db, 'votes'))
+        ]);
+        await deleteSnapshotDocuments(votesSnapshot);
+        await deleteSnapshotDocuments(judgesSnapshot);
+        showMessage(`${judgesSnapshot.size}명의 심사위원과 투표 내역이 삭제되었습니다.`, 'success');
+        await window.loadJudgesList();
+      } catch (error) {
+        console.error('심사위원 초기화 실패:', error);
+        showMessage('심사위원 초기화 중 오류가 발생했습니다.', 'error');
+      }
+    };
+
+    function csvCell(value) {
+      const text = String(value ?? '');
+      return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+    }
+
+    window.exportVotesToCSV = async function () {
+      try {
+        const [projectsSnapshot, votesSnapshot] = await Promise.all([
+          getDocs(collection(db, 'projects')),
+          getDocs(collection(db, 'votes'))
+        ]);
+
+        const projects = projectsSnapshot.docs.map(projectDocument => ({ id: projectDocument.id, ...projectDocument.data() }));
+        const votes = votesSnapshot.docs.map(voteDocument => voteDocument.data());
+        const votesByProject = new Map();
+        votes.forEach(vote => {
+          if (!votesByProject.has(vote.projectId)) votesByProject.set(vote.projectId, []);
+          votesByProject.get(vote.projectId).push(vote);
+        });
+
+        projects.sort((left, right) => {
+          const difference = (votesByProject.get(right.id)?.length || 0) - (votesByProject.get(left.id)?.length || 0);
+          return difference || projectTitle(left).localeCompare(projectTitle(right), 'ko');
+        });
+
+        if (projects.length === 0) {
+          showMessage('내보낼 과제가 없습니다.', 'info');
+          return;
+        }
+
+        const rows = [['순위', '과제명', '과제 수행 조직', '득표수', '투표 심사위원']];
+        let rank = 0;
+        let previousCount = null;
+        projects.forEach((project, index) => {
+          const projectVotes = votesByProject.get(project.id) || [];
+          if (previousCount !== projectVotes.length) rank = index + 1;
+          previousCount = projectVotes.length;
+          const voterNames = projectVotes
+            .map(vote => `${vote.judgeName || '이름 미상'}(${vote.judgePosition || '직책 미상'}/${vote.judgeOrganization || '조직 미상'})`)
+            .join(', ');
+          rows.push([rank, projectTitle(project), projectOrganization(project) || '미설정', projectVotes.length, voterNames]);
+        });
+
+        const csv = '\uFEFF' + rows.map(row => row.map(csvCell).join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        const now = new Date();
+        const date = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+        link.href = url;
+        link.download = `투표결과_${date}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        showMessage('투표 결과 CSV가 다운로드되었습니다.', 'success');
+      } catch (error) {
+        console.error('CSV 내보내기 실패:', error);
+        showMessage('CSV 생성 중 오류가 발생했습니다.', 'error');
+      }
+    };
+
+    window.loadAdminData = async function () {
+      await Promise.all([window.loadAdminProjects(), window.loadJudgesList()]);
+    };
+
+    async function restoreSession() {
+      let savedUser = null;
+      try {
+        const saved = sessionStorage.getItem('currentUser');
+        if (saved) savedUser = JSON.parse(saved);
+      } catch (error) {
+        console.warn('세션 정보를 복원할 수 없습니다.', error);
+      }
+
+      if (!savedUser?.id) return;
+
+      try {
+        const snapshot = await getDoc(doc(db, 'users', savedUser.id));
+        if (!snapshot.exists()) {
+          clearSession();
+          return;
+        }
+
+        const freshUser = { id: snapshot.id, ...snapshot.data() };
+        saveSession(freshUser);
+        await showAuthenticatedPage(freshUser);
+      } catch (error) {
+        console.error('로그인 상태 복원 실패:', error);
+        clearSession();
+      }
+    }
+
+    function closeModalOnBackdrop(event) {
+      if (event.target === byId('editUserModal')) window.closeUserModal();
+      if (event.target === byId('editProjectModal')) window.closeProjectModal();
+    }
+
+    async function boot() {
+      populateSelect('projectOrganization', TARGET_ORGANIZATIONS, '과제 수행 조직을 선택하세요');
+      populateSelect('editProjectOrganization', TARGET_ORGANIZATIONS, '과제 수행 조직을 선택하세요');
+      populateSelect('userOrganization', ALL_ORGANIZATIONS, '소속 조직을 선택하세요');
+      populateSelect('editOrganization', ALL_ORGANIZATIONS, '소속 조직을 선택하세요');
+      byId('editUserModal').addEventListener('click', closeModalOnBackdrop);
+      byId('editProjectModal').addEventListener('click', closeModalOnBackdrop);
+
+      document.addEventListener('keydown', event => {
+        if (event.key !== 'Escape') return;
+        window.closeUserModal();
+        window.closeProjectModal();
+      });
+
+      try {
+        const result = await ensureDatabaseInitialized();
+        if (result.adminCreated) showMessage('초기 관리자 계정이 생성되었습니다.', 'success');
+      } catch (error) {
+        console.error('데이터베이스 초기화 실패:', error);
+        showMessage('데이터베이스 초기화에 실패했습니다. 로그인 시 다시 시도합니다.', 'error');
+      }
+
+      await restoreSession();
+    }
+
+    boot();
+  </script>
 </body>
 
 </html>

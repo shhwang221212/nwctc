@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NW통신기술경진대회 투표 플랫폼</title>
+  <title>제7회 NW통신기술경진대회 응원 심사 플랫폼</title>
   <link rel="stylesheet" href="style.css">
   <style>
     .header-inner,
@@ -243,7 +243,7 @@
 
   <main id="loginPage" class="page active">
     <form class="login-container" onsubmit="login(event)">
-      <h2>NW통신기술경진대회<br>투표 플랫폼</h2>
+      <h2>제7회 NW통신기술경진대회<br>응원 심사 플랫폼</h2>
       <div class="form-group">
         <label for="loginId">아이디</label>
         <input type="text" id="loginId" autocomplete="username" placeholder="아이디를 입력하세요" required>
@@ -261,7 +261,7 @@
   <main id="adminPage" class="page">
     <header>
       <div class="container header-inner">
-        <h1>투표 플랫폼 · 관리자</h1>
+        <h1>제7회 NW통신기술경진대회 응원 심사 플랫폼 · 관리자</h1>
         <div class="header-actions">
           <button type="button" class="logout-btn" onclick="logout()">로그아웃</button>
         </div>
@@ -341,7 +341,7 @@
     <header>
       <div class="container header-inner">
         <div>
-          <h1><span id="judgeName"></span> 심사위원</h1>
+          <h1><span id="judgeName"></span></h1>
           <div id="judgeProfile" class="profile-line"></div>
         </div>
         <div class="header-actions">
@@ -559,6 +559,12 @@
       return project.title || project.teamName || '이름 없는 과제';
     }
 
+    function judgeDisplayName(name, position) {
+      const normalizedName = String(name || '이름 미상').trim();
+      const normalizedPosition = POSITIONS.includes(position) ? position : '';
+      return `${normalizedName}${normalizedPosition}님`;
+    }
+
     function hasCompleteJudgeProfile(user) {
       return POSITIONS.includes(user?.position) && ALL_ORGANIZATIONS.includes(user?.organization);
     }
@@ -583,7 +589,7 @@
 
       if (user.role === 'judge') {
         showOnlyPage('judgePage');
-        byId('judgeName').textContent = user.name;
+        byId('judgeName').textContent = judgeDisplayName(user.name, user.position);
         await window.loadJudgeProjects();
         return;
       }
@@ -876,7 +882,7 @@
               <details class="voter-details">
                 <summary>투표자 ${voters.length}명 보기</summary>
                 <ul class="voter-list">
-                  ${voters.map(vote => `<li>${escapeHtml(vote.judgeName || '이름 미상')} · ${escapeHtml(vote.judgePosition || '직책 미상')} · ${escapeHtml(vote.judgeOrganization || '조직 미상')}</li>`).join('')}
+                  ${voters.map(vote => `<li>${escapeHtml(judgeDisplayName(vote.judgeName, vote.judgePosition))} · ${escapeHtml(vote.judgeOrganization || '조직 미상')}</li>`).join('')}
                 </ul>
               </details>
             ` : ''}
@@ -973,7 +979,7 @@
           card.className = 'user-card';
           card.innerHTML = `
             <div class="user-info">
-              <div class="user-name">${escapeHtml(judge.name || '이름 미상')}</div>
+              <div class="user-name">${escapeHtml(judgeDisplayName(judge.name, judge.position))}</div>
               <div class="user-credentials">아이디: ${escapeHtml(judge.userId || '')} · 비밀번호: ${escapeHtml(judge.password || '')}</div>
               <div class="badge-row user-meta">
                 <span class="position-badge">${escapeHtml(judge.position || '직책 미설정')}</span>
@@ -989,7 +995,7 @@
           `;
 
           card.querySelector('.edit-btn').addEventListener('click', () => window.editUser(judge.id));
-          card.querySelector('.delete-btn').addEventListener('click', () => window.deleteUser(judge.id, judge.name));
+          card.querySelector('.delete-btn').addEventListener('click', () => window.deleteUser(judge.id, judge.name, judge.position));
           list.appendChild(card);
         });
       } catch (error) {
@@ -1097,8 +1103,8 @@
       }
     };
 
-    window.deleteUser = async function (judgeDocumentId, judgeName) {
-      if (!window.confirm(`${judgeName || '선택한 심사위원'} 계정과 투표 내역을 삭제하시겠습니까?`)) return;
+    window.deleteUser = async function (judgeDocumentId, judgeName, judgePosition) {
+      if (!window.confirm(`${judgeDisplayName(judgeName, judgePosition)} 계정과 투표 내역을 삭제하시겠습니까?`)) return;
 
       try {
         const batch = writeBatch(db);
@@ -1126,7 +1132,7 @@
 
         const user = { id: userSnapshot.id, ...userSnapshot.data() };
         saveSession(user);
-        byId('judgeName').textContent = user.name;
+        byId('judgeName').textContent = judgeDisplayName(user.name, user.position);
         byId('judgeProfile').textContent = `${user.position || '직책 미설정'} · ${user.organization || '소속 조직 미설정'}`;
 
         const [projectsSnapshot, voteSnapshot] = await Promise.all([
@@ -1385,7 +1391,7 @@
           if (previousCount !== projectVotes.length) rank = index + 1;
           previousCount = projectVotes.length;
           const voterNames = projectVotes
-            .map(vote => `${vote.judgeName || '이름 미상'}(${vote.judgePosition || '직책 미상'}/${vote.judgeOrganization || '조직 미상'})`)
+            .map(vote => `${judgeDisplayName(vote.judgeName, vote.judgePosition)}(${vote.judgeOrganization || '조직 미상'})`)
             .join(', ');
           rows.push([rank, projectTitle(project), projectOrganization(project) || '미설정', projectVotes.length, voterNames]);
         });
